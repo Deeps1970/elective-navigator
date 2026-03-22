@@ -34,7 +34,12 @@ export default function SearchStudents({ refreshKey }: Props) {
     fetchElectives().then(setElectives).catch(() => {});
   }, [refreshKey]);
 
-  const update = (key: string, val: string) => setFilters(prev => ({ ...prev, [key]: key === 'cgpa' ? (val ? parseFloat(val) : undefined) : val }));
+  const update = (key: string, val: string) => setFilters(prev => ({
+    ...prev,
+    [key]: key === 'cgpa' ? (val ? parseFloat(val) : undefined)
+         : key === 'elective_id' ? (val ? parseInt(val) : undefined)
+         : val,
+  }));
 
   return (
     <motion.div
