@@ -55,11 +55,26 @@ export async function addStudent(student: Omit<Student, 'electives'>): Promise<v
   if (updateErr) throw updateErr;
 }
 
+export async function addElective(name: string, maxCapacity: number): Promise<void> {
+  const { data: existing } = await supabase
+    .from('electives')
+    .select('elective_id')
+    .eq('elective_name', name)
+    .maybeSingle();
+  if (existing) throw new Error('An elective with this name already exists.');
+
+  const { error } = await supabase
+    .from('electives')
+    .insert({ elective_name: name, max_capacity: maxCapacity, current_count: 0 });
+  if (error) throw error;
+}
+
 export interface SearchFilters {
   name?: string;
   dept?: string;
   section?: string;
   cgpa?: number;
+  elective_id?: number;
 }
 
 export async function searchStudents(filters: SearchFilters): Promise<Student[]> {
@@ -72,6 +87,7 @@ export async function searchStudents(filters: SearchFilters): Promise<Student[]>
   if (filters.dept) query = query.eq('dept', filters.dept);
   if (filters.section) query = query.eq('section', filters.section);
   if (filters.cgpa !== undefined && filters.cgpa > 0) query = query.gte('cgpa', filters.cgpa);
+  if (filters.elective_id) query = query.eq('elective_id', filters.elective_id);
 
   const { data, error } = await query;
   if (error) throw error;
