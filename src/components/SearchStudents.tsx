@@ -12,6 +12,7 @@ interface Props {
 
 export default function SearchStudents({ refreshKey }: Props) {
   const [students, setStudents] = useState<Student[]>([]);
+  const [electives, setElectives] = useState<Elective[]>([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({ name: '', dept: '', section: '' });
 
