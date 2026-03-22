@@ -9,6 +9,7 @@ const SECTIONS = ['A', 'B'];
 
 interface Props {
   refreshKey: number;
+  onDataChanged?: () => void;
 }
 
 export default function SearchStudents({ refreshKey }: Props) {
