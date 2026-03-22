@@ -106,7 +106,9 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
                       transition={{ delay: i * 0.03 }}
-                      className="border-b border-border/20 hover:bg-muted/20 transition-colors"
+                      className="border-b border-border/20 hover:bg-muted/20 transition-colors cursor-pointer"
+                      title="Click to edit or delete"
+                      onClick={() => setSelectedStudent(s)}
                     >
                       <td className="px-4 py-3 font-medium">{s.name}</td>
                       <td className="px-4 py-3 text-muted-foreground">{s.reg_no}</td>
