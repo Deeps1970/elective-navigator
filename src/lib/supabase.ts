@@ -1,9 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export { supabase };
 
 export interface Elective {
   elective_id: number;
@@ -33,7 +30,6 @@ export async function fetchElectives(): Promise<Elective[]> {
 }
 
 export async function addStudent(student: Omit<Student, 'electives'>): Promise<void> {
-  // Check duplicate
   const { data: existing } = await supabase
     .from('students')
     .select('reg_no')
@@ -41,7 +37,6 @@ export async function addStudent(student: Omit<Student, 'electives'>): Promise<v
     .maybeSingle();
   if (existing) throw new Error('A student with this Register Number already exists.');
 
-  // Check capacity
   const { data: elective } = await supabase
     .from('electives')
     .select('*')
@@ -50,11 +45,9 @@ export async function addStudent(student: Omit<Student, 'electives'>): Promise<v
   if (!elective) throw new Error('Elective not found.');
   if (elective.current_count >= elective.max_capacity) throw new Error('This elective is full. No seats available.');
 
-  // Insert student
   const { error: insertErr } = await supabase.from('students').insert(student);
   if (insertErr) throw insertErr;
 
-  // Increment count
   const { error: updateErr } = await supabase
     .from('electives')
     .update({ current_count: elective.current_count + 1 })
