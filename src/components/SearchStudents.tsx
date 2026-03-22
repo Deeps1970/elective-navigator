@@ -125,6 +125,13 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
           </table>
         </div>
       </div>
+      {selectedStudent && (
+        <EditStudentModal
+          student={selectedStudent}
+          onClose={() => setSelectedStudent(null)}
+          onUpdated={() => { doSearch(); onDataChanged?.(); }}
+        />
+      )}
     </motion.div>
   );
 }
