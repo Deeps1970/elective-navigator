@@ -30,6 +30,10 @@ export default function SearchStudents({ refreshKey }: Props) {
 
   useEffect(() => { doSearch(); }, [refreshKey, doSearch]);
 
+  useEffect(() => {
+    fetchElectives().then(setElectives).catch(() => {});
+  }, [refreshKey]);
+
   const update = (key: string, val: string) => setFilters(prev => ({ ...prev, [key]: key === 'cgpa' ? (val ? parseFloat(val) : undefined) : val }));
 
   return (
