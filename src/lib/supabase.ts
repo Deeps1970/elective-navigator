@@ -17,7 +17,7 @@ export interface Student {
   cgpa: number;
   year: number;
   elective_id: number;
-  electives?: Elective;
+  electives?: Partial<Elective>;
 }
 
 export async function fetchElectives(): Promise<Elective[]> {
