@@ -59,6 +59,10 @@ export default function SearchStudents({ refreshKey }: Props) {
             {SECTIONS.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           <input type="number" step="0.01" min="0" max="10" className="glass-input" placeholder="Min CGPA" onChange={e => update('cgpa', e.target.value)} />
+          <select className="glass-input" value={filters.elective_id || ''} onChange={e => update('elective_id', e.target.value)}>
+            <option value="">All Electives</option>
+            {electives.map(el => <option key={el.elective_id} value={String(el.elective_id)}>{el.elective_name}</option>)}
+          </select>
         </div>
         <button
           onClick={doSearch}

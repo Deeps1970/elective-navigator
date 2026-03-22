@@ -18,6 +18,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/app" element={<MainApp />} />
+          <Route path="/electives" element={<ElectivesOverview />} />
+          <Route path="/add-elective" element={<AddElective />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
