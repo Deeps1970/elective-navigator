@@ -12,10 +12,11 @@ interface Props {
   onDataChanged?: () => void;
 }
 
-export default function SearchStudents({ refreshKey }: Props) {
+export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
   const [students, setStudents] = useState<Student[]>([]);
   const [electives, setElectives] = useState<Elective[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [filters, setFilters] = useState<SearchFilters>({ name: '', dept: '', section: '' });
 
   const doSearch = useCallback(async () => {
