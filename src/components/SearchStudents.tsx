@@ -53,7 +53,7 @@ export default function SearchStudents({ refreshKey }: Props) {
         <h2 className="text-2xl font-bold gradient-text mb-4" style={{ fontFamily: 'var(--font-display)' }}>
           Search Students
         </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           <input className="glass-input" placeholder="Name" value={filters.name || ''} onChange={e => update('name', e.target.value)} />
           <select className="glass-input" value={filters.dept || ''} onChange={e => update('dept', e.target.value)}>
             <option value="">All Departments</option>
