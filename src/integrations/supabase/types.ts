@@ -14,7 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      electives: {
+        Row: {
+          current_count: number
+          elective_id: number
+          elective_name: string
+          max_capacity: number
+        }
+        Insert: {
+          current_count?: number
+          elective_id?: number
+          elective_name: string
+          max_capacity?: number
+        }
+        Update: {
+          current_count?: number
+          elective_id?: number
+          elective_name?: string
+          max_capacity?: number
+        }
+        Relationships: []
+      }
+      students: {
+        Row: {
+          cgpa: number
+          dept: string
+          elective_id: number
+          name: string
+          reg_no: string
+          section: string
+          year: number
+        }
+        Insert: {
+          cgpa: number
+          dept: string
+          elective_id: number
+          name: string
+          reg_no: string
+          section: string
+          year: number
+        }
+        Update: {
+          cgpa?: number
+          dept?: string
+          elective_id?: number
+          name?: string
+          reg_no?: string
+          section?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_elective_id_fkey"
+            columns: ["elective_id"]
+            isOneToOne: false
+            referencedRelation: "electives"
+            referencedColumns: ["elective_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
