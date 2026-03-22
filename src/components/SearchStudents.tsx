@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { searchStudents, type Student, type SearchFilters } from '@/lib/supabase';
+import { searchStudents, fetchElectives, type Student, type SearchFilters, type Elective } from '@/lib/supabase';
 
 const DEPARTMENTS = ['CSE', 'IT', 'ECE', 'EEE', 'MECH'];
 const SECTIONS = ['A', 'B'];
@@ -12,6 +12,7 @@ interface Props {
 
 export default function SearchStudents({ refreshKey }: Props) {
   const [students, setStudents] = useState<Student[]>([]);
+  const [electives, setElectives] = useState<Elective[]>([]);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({ name: '', dept: '', section: '' });
 
@@ -29,7 +30,16 @@ export default function SearchStudents({ refreshKey }: Props) {
 
   useEffect(() => { doSearch(); }, [refreshKey, doSearch]);
 
-  const update = (key: string, val: string) => setFilters(prev => ({ ...prev, [key]: key === 'cgpa' ? (val ? parseFloat(val) : undefined) : val }));
+  useEffect(() => {
+    fetchElectives().then(setElectives).catch(() => {});
+  }, [refreshKey]);
+
+  const update = (key: string, val: string) => setFilters(prev => ({
+    ...prev,
+    [key]: key === 'cgpa' ? (val ? parseFloat(val) : undefined)
+         : key === 'elective_id' ? (val ? parseInt(val) : undefined)
+         : val,
+  }));
 
   return (
     <motion.div
@@ -43,7 +53,7 @@ export default function SearchStudents({ refreshKey }: Props) {
         <h2 className="text-2xl font-bold gradient-text mb-4" style={{ fontFamily: 'var(--font-display)' }}>
           Search Students
         </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           <input className="glass-input" placeholder="Name" value={filters.name || ''} onChange={e => update('name', e.target.value)} />
           <select className="glass-input" value={filters.dept || ''} onChange={e => update('dept', e.target.value)}>
             <option value="">All Departments</option>
@@ -54,6 +64,10 @@ export default function SearchStudents({ refreshKey }: Props) {
             {SECTIONS.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
           <input type="number" step="0.01" min="0" max="10" className="glass-input" placeholder="Min CGPA" onChange={e => update('cgpa', e.target.value)} />
+          <select className="glass-input" value={filters.elective_id || ''} onChange={e => update('elective_id', e.target.value)}>
+            <option value="">All Electives</option>
+            {electives.map(el => <option key={el.elective_id} value={String(el.elective_id)}>{el.elective_name}</option>)}
+          </select>
         </div>
         <button
           onClick={doSearch}

@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Landing from "./pages/Landing";
 import MainApp from "./pages/MainApp";
+import ElectivesOverview from "./pages/ElectivesOverview";
+import AddElective from "./pages/AddElective";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -16,6 +18,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/app" element={<MainApp />} />
+          <Route path="/electives" element={<ElectivesOverview />} />
+          <Route path="/add-elective" element={<AddElective />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
