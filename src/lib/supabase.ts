@@ -93,3 +93,51 @@ export async function searchStudents(filters: SearchFilters): Promise<Student[]>
   if (error) throw error;
   return data ?? [];
 }
+
+export async function updateStudent(
+  regNo: string,
+  updates: Partial<Omit<Student, 'electives' | 'reg_no'>>,
+  oldElectiveId: number,
+  newElectiveId: number
+): Promise<void> {
+  if (updates.cgpa !== undefined && (updates.cgpa < 0 || updates.cgpa > 10)) {
+    throw new Error('CGPA must be between 0 and 10');
+  }
+
+  if (oldElectiveId !== newElectiveId) {
+    const { data: newEl } = await supabase
+      .from('electives').select('*').eq('elective_id', newElectiveId).single();
+    if (!newEl) throw new Error('Elective not found.');
+    if (newEl.current_count >= newEl.max_capacity) throw new Error('New elective is full.');
+
+    const { data: oldEl } = await supabase
+      .from('electives').select('*').eq('elective_id', oldElectiveId).single();
+
+    const { error: studentErr } = await supabase
+      .from('students').update(updates).eq('reg_no', regNo);
+    if (studentErr) throw studentErr;
+
+    await supabase.from('electives')
+      .update({ current_count: Math.max(0, (oldEl?.current_count ?? 1) - 1) })
+      .eq('elective_id', oldElectiveId);
+    await supabase.from('electives')
+      .update({ current_count: newEl.current_count + 1 })
+      .eq('elective_id', newElectiveId);
+  } else {
+    const { error } = await supabase.from('students').update(updates).eq('reg_no', regNo);
+    if (error) throw error;
+  }
+}
+
+export async function deleteStudent(regNo: string, electiveId: number): Promise<void> {
+  const { error } = await supabase.from('students').delete().eq('reg_no', regNo);
+  if (error) throw error;
+
+  const { data: el } = await supabase
+    .from('electives').select('current_count').eq('elective_id', electiveId).single();
+  if (el) {
+    await supabase.from('electives')
+      .update({ current_count: Math.max(0, el.current_count - 1) })
+      .eq('elective_id', electiveId);
+  }
+}
