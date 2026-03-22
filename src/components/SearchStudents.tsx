@@ -2,18 +2,21 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { searchStudents, fetchElectives, type Student, type SearchFilters, type Elective } from '@/lib/supabase';
+import EditStudentModal from './EditStudentModal';
 
 const DEPARTMENTS = ['CSE', 'IT', 'ECE', 'EEE', 'MECH'];
 const SECTIONS = ['A', 'B'];
 
 interface Props {
   refreshKey: number;
+  onDataChanged?: () => void;
 }
 
-export default function SearchStudents({ refreshKey }: Props) {
+export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
   const [students, setStudents] = useState<Student[]>([]);
   const [electives, setElectives] = useState<Elective[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [filters, setFilters] = useState<SearchFilters>({ name: '', dept: '', section: '' });
 
   const doSearch = useCallback(async () => {
@@ -103,7 +106,9 @@ export default function SearchStudents({ refreshKey }: Props) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
                       transition={{ delay: i * 0.03 }}
-                      className="border-b border-border/20 hover:bg-muted/20 transition-colors"
+                      className="border-b border-border/20 hover:bg-muted/20 transition-colors cursor-pointer"
+                      title="Click to edit or delete"
+                      onClick={() => setSelectedStudent(s)}
                     >
                       <td className="px-4 py-3 font-medium">{s.name}</td>
                       <td className="px-4 py-3 text-muted-foreground">{s.reg_no}</td>
@@ -120,6 +125,13 @@ export default function SearchStudents({ refreshKey }: Props) {
           </table>
         </div>
       </div>
+      {selectedStudent && (
+        <EditStudentModal
+          student={selectedStudent}
+          onClose={() => setSelectedStudent(null)}
+          onUpdated={() => { doSearch(); onDataChanged?.(); }}
+        />
+      )}
     </motion.div>
   );
 }
