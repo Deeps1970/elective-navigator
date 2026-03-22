@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Landing from "./pages/Landing";
 import MainApp from "./pages/MainApp";
+import ElectivesOverview from "./pages/ElectivesOverview";
+import AddElective from "./pages/AddElective";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
