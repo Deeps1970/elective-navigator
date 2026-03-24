@@ -19,16 +19,16 @@ export default function Landing() {
       {/* Hero */}
       <section className="relative z-10 flex items-center justify-center min-h-screen px-4">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.7 }}
-          className="glass-card gradient-border p-10 md:p-16 text-center max-w-2xl"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="glass-card p-10 md:p-16 text-center max-w-2xl"
         >
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-4xl md:text-6xl font-bold gradient-text mb-4"
+            transition={{ delay: 0.2 }}
+            className="text-4xl md:text-5xl font-bold text-primary mb-4"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             Elective Selection System
@@ -36,20 +36,19 @@ export default function Landing() {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.4 }}
             className="text-muted-foreground text-lg mb-8"
           >
-            Seamlessly choose your electives with real-time seat tracking and a beautiful, modern interface.
+            Seamlessly choose your electives with real-time seat tracking and a clean, professional interface.
           </motion.p>
           <motion.button
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            whileHover={{ scale: 1.05 }}
+            transition={{ delay: 0.6 }}
+            whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => navigate('/app')}
-            className="rounded-2xl px-10 py-4 font-bold text-lg text-primary-foreground transition-all"
-            style={{ background: 'linear-gradient(135deg, hsl(250 80% 65%), hsl(320 70% 60%))' }}
+            className="btn-primary text-lg px-10 py-4 rounded-xl"
           >
             Explore Our Product
           </motion.button>
@@ -62,7 +61,7 @@ export default function Landing() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="text-3xl md:text-4xl font-bold gradient-text text-center mb-12"
+          className="text-3xl md:text-4xl font-bold text-primary text-center mb-12"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           Meet the Team
@@ -75,12 +74,12 @@ export default function Landing() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              whileHover={{ y: -8, scale: 1.03 }}
-              className="glass-card gradient-border p-6 text-center cursor-default"
+              whileHover={{ y: -4 }}
+              className="glass-card p-6 text-center cursor-default"
             >
               <div
-                className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold text-primary-foreground"
-                style={{ background: 'linear-gradient(135deg, hsl(250 80% 65%), hsl(320 70% 60%))' }}
+                className="w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center text-xl font-bold text-primary-foreground"
+                style={{ background: 'linear-gradient(135deg, hsl(210 70% 45%), hsl(199 70% 48%))' }}
               >
                 {member.name.charAt(0)}
               </div>
@@ -92,7 +91,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 text-center py-8 text-muted-foreground text-sm border-t border-border/20">
+      <footer className="relative z-10 text-center py-8 text-muted-foreground text-sm border-t border-border">
         © Deepak
       </footer>
     </div>

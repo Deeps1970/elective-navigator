@@ -2,50 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
-
 @layer base {
   :root {
-    --background: 230 25% 8%;
-    --foreground: 220 20% 95%;
+    --background: 216 33% 97%;
+    --foreground: 214 32% 15%;
 
-    --card: 230 20% 12%;
-    --card-foreground: 220 20% 95%;
+    --card: 0 0% 100%;
+    --card-foreground: 214 32% 15%;
 
-    --popover: 230 20% 12%;
-    --popover-foreground: 220 20% 95%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 214 32% 15%;
 
-    --primary: 250 80% 65%;
+    --primary: 210 70% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 200 60% 50%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 210 50% 92%;
+    --secondary-foreground: 210 70% 35%;
 
-    --muted: 230 15% 18%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 214 20% 92%;
+    --muted-foreground: 214 15% 50%;
 
-    --accent: 320 70% 60%;
+    --accent: 199 70% 48%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 230 15% 22%;
-    --input: 230 15% 20%;
-    --ring: 250 80% 65%;
+    --border: 214 20% 88%;
+    --input: 214 20% 90%;
+    --ring: 210 70% 45%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
 
-    --glass-bg: 230 20% 14%;
-    --glass-border: 230 15% 28%;
-    --glass-shadow: 250 80% 65%;
+    --glass-bg: 210 30% 98%;
+    --glass-border: 214 20% 85%;
+    --glass-shadow: 210 70% 45%;
 
-    --gradient-start: 250 80% 65%;
-    --gradient-mid: 280 70% 55%;
-    --gradient-end: 320 70% 60%;
+    --gradient-start: 210 70% 45%;
+    --gradient-mid: 199 70% 48%;
+    --gradient-end: 210 60% 55%;
 
-    --font-display: 'Space Grotesk', sans-serif;
+    --font-display: 'Poppins', sans-serif;
     --font-body: 'Inter', sans-serif;
+
+    --success: 152 60% 42%;
   }
 }
 
@@ -66,44 +66,33 @@
 
 @layer components {
   .glass-card {
-    @apply relative overflow-hidden rounded-2xl border border-border/40;
-    background: hsl(var(--glass-bg) / 0.6);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    box-shadow: 0 8px 32px hsl(var(--glass-shadow) / 0.1),
-                inset 0 1px 0 hsl(var(--glass-border) / 0.3);
+    @apply relative overflow-hidden rounded-xl border border-border bg-card;
+    box-shadow: 0 1px 3px hsl(var(--glass-shadow) / 0.06),
+                0 4px 16px hsl(var(--glass-shadow) / 0.04);
   }
 
   .glass-input {
-    @apply rounded-xl border border-border/40 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all;
-    background: hsl(var(--glass-bg) / 0.4);
-    backdrop-filter: blur(12px);
+    @apply rounded-lg border border-border bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all text-sm;
   }
 
   .gradient-text {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-mid)), hsl(var(--gradient-end)));
+    @apply text-primary font-semibold;
   }
 
   .gradient-bg {
-    background: linear-gradient(135deg, hsl(var(--gradient-start) / 0.15), hsl(var(--gradient-mid) / 0.1), hsl(var(--gradient-end) / 0.15));
+    background: linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)));
   }
 
   .gradient-border {
-    position: relative;
+    /* clean card style - no pseudo-element border needed */
   }
 
   .gradient-border::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(135deg, hsl(var(--gradient-start) / 0.5), hsl(var(--gradient-mid) / 0.3), hsl(var(--gradient-end) / 0.5));
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
+    display: none;
+  }
+
+  .btn-primary {
+    @apply rounded-lg px-6 py-2.5 font-semibold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50;
+    background: linear-gradient(135deg, hsl(210 70% 45%), hsl(199 70% 48%));
   }
 }

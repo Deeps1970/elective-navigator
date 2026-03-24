@@ -74,8 +74,7 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
         </div>
         <button
           onClick={doSearch}
-          className="mt-4 rounded-xl px-8 py-2.5 font-semibold text-primary-foreground transition-all hover:opacity-90"
-          style={{ background: 'linear-gradient(135deg, hsl(250 80% 65%), hsl(320 70% 60%))' }}
+          className="mt-4 btn-primary"
         >
           Search
         </button>
