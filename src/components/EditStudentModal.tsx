@@ -115,7 +115,7 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
                 <button
                   onClick={() => setConfirmDelete(false)}
                   className="flex-1 rounded-xl py-3 font-semibold border border-border/40 text-muted-foreground hover:text-foreground transition-all"
-                  style={{ background: 'hsl(230 20% 14% / 0.4)' }}
+                  
                 >
                   Cancel
                 </button>
@@ -176,8 +176,7 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
                 <button
                   onClick={handleUpdate}
                   disabled={loading}
-                  className="flex-1 rounded-xl py-3 font-semibold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg, hsl(250 80% 65%), hsl(320 70% 60%))' }}
+                  className="flex-1 btn-primary py-3"
                 >
                   {loading ? 'Updating...' : 'Update'}
                 </button>
@@ -191,7 +190,7 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
                 <button
                   onClick={onClose}
                   className="rounded-xl px-6 py-3 font-semibold border border-border/40 text-muted-foreground hover:text-foreground transition-all"
-                  style={{ background: 'hsl(230 20% 14% / 0.4)' }}
+                  
                 >
                   Cancel
                 </button>

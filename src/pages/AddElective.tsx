@@ -56,8 +56,7 @@ export default function AddElective() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl py-3 font-semibold text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
-              style={{ background: 'linear-gradient(135deg, hsl(250 80% 65%), hsl(320 70% 60%))' }}
+              className="w-full btn-primary py-3"
             >
               {loading ? 'Adding...' : 'Add Elective'}
             </button>
