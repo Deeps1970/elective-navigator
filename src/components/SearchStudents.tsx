@@ -6,6 +6,7 @@ import EditStudentModal from './EditStudentModal';
 
 const DEPARTMENTS = ['CSE', 'IT', 'ECE', 'EEE', 'MECH'];
 const SECTIONS = ['A', 'B'];
+const BATCHES = ['2023', '2024', '2025', '2026'];
 
 interface Props {
   refreshKey: number;
@@ -17,7 +18,7 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
   const [electives, setElectives] = useState<Elective[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [filters, setFilters] = useState<SearchFilters>({ name: '', dept: '', section: '' });
+  const [filters, setFilters] = useState<SearchFilters>({ name: '', dept: '', section: '', batch: '' });
 
   const doSearch = useCallback(async () => {
     setLoading(true);
@@ -42,6 +43,14 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
     [key]: key === 'elective_id' ? (val ? parseInt(val) : undefined) : val,
   }));
 
+  const getElectiveName = (student: Student): string => {
+    if (student.enrollments && student.enrollments.length > 0) {
+      const enrollment = student.enrollments[0];
+      return (enrollment.electives as any)?.elective_name || '—';
+    }
+    return '—';
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -54,7 +63,7 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
         <h2 className="text-2xl font-bold gradient-text mb-4" style={{ fontFamily: 'var(--font-display)' }}>
           Search Students
         </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           <input className="glass-input" placeholder="Name" value={filters.name || ''} onChange={e => update('name', e.target.value)} />
           <select className="glass-input" value={filters.dept || ''} onChange={e => update('dept', e.target.value)}>
             <option value="">All Departments</option>
@@ -63,6 +72,10 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
           <select className="glass-input" value={filters.section || ''} onChange={e => update('section', e.target.value)}>
             <option value="">All Sections</option>
             {SECTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select className="glass-input" value={filters.batch || ''} onChange={e => update('batch', e.target.value)}>
+            <option value="">All Batches</option>
+            {BATCHES.map(b => <option key={b} value={b}>{b}</option>)}
           </select>
           <select className="glass-input" value={filters.elective_id || ''} onChange={e => update('elective_id', e.target.value)}>
             <option value="">All Electives</option>
@@ -80,7 +93,7 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/30">
-                {['Name', 'Reg No', 'Dept', 'Section', 'Batch', 'Elective'].map(h => (
+                {['Name', 'Reg No', 'Email', 'Dept', 'Section', 'Batch', 'Elective'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-muted-foreground font-medium text-xs uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -88,9 +101,9 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
             <tbody>
               <AnimatePresence>
                 {loading ? (
-                  <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">Loading...</td></tr>
+                  <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</td></tr>
                 ) : students.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">No students found</td></tr>
+                  <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">No students found</td></tr>
                 ) : (
                   students.map((s, i) => (
                     <motion.tr
@@ -105,10 +118,11 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
                     >
                       <td className="px-4 py-3 font-medium">{s.name}</td>
                       <td className="px-4 py-3 text-muted-foreground">{s.reg_no}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{s.email || '—'}</td>
                       <td className="px-4 py-3">{s.dept}</td>
                       <td className="px-4 py-3">{s.section}</td>
                       <td className="px-4 py-3">{s.batch || '—'}</td>
-                      <td className="px-4 py-3 gradient-text font-medium">{(s.electives as any)?.elective_name || '—'}</td>
+                      <td className="px-4 py-3 gradient-text font-medium">{getElectiveName(s)}</td>
                     </motion.tr>
                   ))
                 )}
