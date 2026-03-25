@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { fetchElectives, getStudentEnrollment, enrollStudent, type Elective, type Enrollment } from '@/lib/supabase';
+import { fetchElectivesByBatch, getStudentEnrollment, enrollStudent, type Elective, type Enrollment } from '@/lib/supabase';
 import ParticlesBackground from '@/components/ParticlesBackground';
 
 export default function StudentDashboard() {
@@ -27,7 +27,7 @@ export default function StudentDashboard() {
   const loadData = async () => {
     try {
       const [electivesData, enrollmentData] = await Promise.all([
-        fetchElectives(),
+        fetchElectivesByBatch(student.batch),
         getStudentEnrollment(student.reg_no),
       ]);
       setElectives(electivesData);
@@ -42,7 +42,7 @@ export default function StudentDashboard() {
   const handleEnroll = async (elective: Elective) => {
     setEnrollingId(elective.elective_id);
     try {
-      await enrollStudent(student.reg_no, elective.elective_id);
+      await enrollStudent(student.reg_no, elective.elective_id, student.batch);
       toast.success('Successfully Enrolled!');
       setConfirmElective(null);
       await loadData();
@@ -74,7 +74,7 @@ export default function StudentDashboard() {
             Student Dashboard
           </h1>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">Welcome, <strong className="text-foreground">{student.name}</strong></span>
+            <span className="text-sm text-muted-foreground">Welcome, <strong className="text-foreground">{student.name}</strong> ({student.batch})</span>
             <button onClick={handleLogout} className="px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
               Logout
             </button>
@@ -83,7 +83,6 @@ export default function StudentDashboard() {
       </header>
 
       <main className="relative z-10 max-w-6xl mx-auto px-4 py-8">
-        {/* Enrollment Status */}
         {enrollment && enrolledElective && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -99,11 +98,13 @@ export default function StudentDashboard() {
         )}
 
         <h2 className="text-2xl font-bold text-primary mb-6" style={{ fontFamily: 'var(--font-display)' }}>
-          Available Electives
+          Electives for Batch {student.batch}
         </h2>
 
         {loading ? (
           <p className="text-muted-foreground text-center py-12">Loading electives...</p>
+        ) : electives.length === 0 ? (
+          <p className="text-muted-foreground text-center py-12">No electives available for your batch.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {electives.map((el, i) => {

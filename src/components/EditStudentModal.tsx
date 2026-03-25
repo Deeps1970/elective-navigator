@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { fetchElectives, updateStudent, deleteStudent, type Student, type Elective } from '@/lib/supabase';
+import { updateStudent, deleteStudent, type Student } from '@/lib/supabase';
 
 const DEPARTMENTS = ['CSE', 'IT', 'ECE', 'EEE', 'MECH'];
 const SECTIONS = ['A', 'B'];
@@ -13,7 +13,6 @@ interface Props {
 }
 
 export default function EditStudentModal({ student, onClose, onUpdated }: Props) {
-  const [electives, setElectives] = useState<Elective[]>([]);
   const [loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [form, setForm] = useState({
@@ -21,17 +20,13 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
     dept: student.dept,
     section: student.section,
     batch: student.batch || '',
-    elective_id: String(student.elective_id),
+    email: student.email || '',
   });
-
-  useEffect(() => {
-    fetchElectives().then(setElectives).catch(() => {});
-  }, []);
 
   const update = (key: string, val: string) => setForm(prev => ({ ...prev, [key]: val }));
 
   const handleUpdate = async () => {
-    if (!form.name || !form.dept || !form.section || !form.batch || !form.elective_id) {
+    if (!form.name || !form.dept || !form.section || !form.batch) {
       toast.error('All fields are required'); return;
     }
 
@@ -39,9 +34,8 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
     try {
       await updateStudent(
         student.reg_no,
-        { name: form.name, dept: form.dept, section: form.section, batch: form.batch, elective_id: parseInt(form.elective_id) },
-        student.elective_id,
-        parseInt(form.elective_id)
+        { name: form.name, dept: form.dept, section: form.section, batch: form.batch, email: form.email },
+        0, 0
       );
       toast.success('Student updated successfully!');
       onUpdated();
@@ -56,7 +50,7 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
   const handleDelete = async () => {
     setLoading(true);
     try {
-      await deleteStudent(student.reg_no, student.elective_id);
+      await deleteStudent(student.reg_no);
       toast.success('Student deleted successfully!');
       onUpdated();
       onClose();
@@ -66,6 +60,8 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
       setLoading(false);
     }
   };
+
+  const enrolledElective = student.enrollments?.[0]?.electives;
 
   return (
     <AnimatePresence>
@@ -114,6 +110,10 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
                 <label className="block text-sm text-muted-foreground mb-1.5">Name</label>
                 <input className="glass-input w-full" value={form.name} onChange={e => update('name', e.target.value)} />
               </div>
+              <div>
+                <label className="block text-sm text-muted-foreground mb-1.5">Email</label>
+                <input className="glass-input w-full" value={form.email} onChange={e => update('email', e.target.value)} />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-muted-foreground mb-1.5">Department</label>
@@ -130,23 +130,14 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
               </div>
               <div>
                 <label className="block text-sm text-muted-foreground mb-1.5">Batch</label>
-                <input className="glass-input w-full" value={form.batch} onChange={e => update('batch', e.target.value)} placeholder="e.g. 2021-2025" />
+                <input className="glass-input w-full" value={form.batch} onChange={e => update('batch', e.target.value)} placeholder="e.g. 2024" />
               </div>
-              <div>
-                <label className="block text-sm text-muted-foreground mb-1.5">Elective</label>
-                <select className="glass-input w-full" value={form.elective_id} onChange={e => update('elective_id', e.target.value)}>
-                  {electives.map(el => {
-                    const seatsLeft = el.max_capacity - el.current_count;
-                    const isCurrent = el.elective_id === student.elective_id;
-                    const full = seatsLeft <= 0 && !isCurrent;
-                    return (
-                      <option key={el.elective_id} value={String(el.elective_id)} disabled={full}>
-                        {el.elective_name} ({isCurrent ? 'current' : full ? 'FULL' : `${seatsLeft} seats left`})
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
+              {enrolledElective && (
+                <div>
+                  <label className="block text-sm text-muted-foreground mb-1.5">Enrolled Elective</label>
+                  <input className="glass-input w-full opacity-60 cursor-not-allowed" value={(enrolledElective as any)?.elective_name || '—'} readOnly />
+                </div>
+              )}
               <div className="flex gap-3 pt-2">
                 <button onClick={handleUpdate} disabled={loading} className="flex-1 btn-primary py-3">
                   {loading ? 'Updating...' : 'Update'}

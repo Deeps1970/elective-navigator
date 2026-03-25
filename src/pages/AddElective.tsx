@@ -5,8 +5,11 @@ import ParticlesBackground from '@/components/ParticlesBackground';
 import NavBar from '@/components/NavBar';
 import { addElective } from '@/lib/supabase';
 
+const BATCHES = ['2023', '2024', '2025', '2026'];
+
 export default function AddElective() {
   const [name, setName] = useState('');
+  const [batch, setBatch] = useState('');
   const [capacity, setCapacity] = useState('');
   const [eligibility, setEligibility] = useState('');
   const [syllabusLink, setSyllabusLink] = useState('');
@@ -16,6 +19,7 @@ export default function AddElective() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) { toast.error('Elective name is required'); return; }
+    if (!batch) { toast.error('Batch is required'); return; }
     const cap = parseInt(capacity);
     if (isNaN(cap) || cap <= 0) { toast.error('Max capacity must be greater than 0'); return; }
     const cred = parseInt(credits);
@@ -23,9 +27,10 @@ export default function AddElective() {
 
     setLoading(true);
     try {
-      await addElective(name.trim(), cap, eligibility.trim(), syllabusLink.trim(), cred);
+      await addElective(name.trim(), batch, cap, eligibility.trim(), syllabusLink.trim(), cred);
       toast.success('Elective added successfully!');
       setName('');
+      setBatch('');
       setCapacity('');
       setEligibility('');
       setSyllabusLink('');
@@ -59,13 +64,20 @@ export default function AddElective() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
+                <label className="block text-sm text-muted-foreground mb-1.5">Batch</label>
+                <select className="glass-input w-full" value={batch} onChange={e => setBatch(e.target.value)}>
+                  <option value="">Select Batch</option>
+                  {BATCHES.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm text-muted-foreground mb-1.5">Max Capacity</label>
                 <input type="number" min="1" className="glass-input w-full" placeholder="30" value={capacity} onChange={e => setCapacity(e.target.value)} />
               </div>
-              <div>
-                <label className="block text-sm text-muted-foreground mb-1.5">Credits</label>
-                <input type="number" min="1" className="glass-input w-full" placeholder="3" value={credits} onChange={e => setCredits(e.target.value)} />
-              </div>
+            </div>
+            <div>
+              <label className="block text-sm text-muted-foreground mb-1.5">Credits</label>
+              <input type="number" min="1" className="glass-input w-full" placeholder="3" value={credits} onChange={e => setCredits(e.target.value)} />
             </div>
             <div>
               <label className="block text-sm text-muted-foreground mb-1.5">Eligibility Criteria</label>

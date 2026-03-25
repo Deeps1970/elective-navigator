@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       electives: {
         Row: {
+          batch: string
           credits: number | null
           current_count: number
           elective_id: number
@@ -25,6 +26,7 @@ export type Database = {
           syllabus_link: string | null
         }
         Insert: {
+          batch?: string
           credits?: number | null
           current_count?: number
           elective_id?: number
@@ -34,6 +36,7 @@ export type Database = {
           syllabus_link?: string | null
         }
         Update: {
+          batch?: string
           credits?: number | null
           current_count?: number
           elective_id?: number
