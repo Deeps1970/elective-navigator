@@ -177,13 +177,15 @@ export async function registerStudent(student: { reg_no: string; name: string; e
   if (emailExists) throw new Error('A student with this email already exists.');
 
   const { error } = await supabase.from('students').insert({
-    ...student,
+    reg_no: student.reg_no,
+    name: student.name,
+    email: student.email,
+    dept: student.dept,
+    section: student.section,
+    batch: student.batch,
     cgpa: 0,
     year: 1,
-    elective_id: 0,
-  });
-  // elective_id 0 is a placeholder - student hasn't enrolled yet
-  // Actually we need a valid elective_id due to FK. Let's handle differently.
+  } as any);
   if (error) throw error;
 }
 
