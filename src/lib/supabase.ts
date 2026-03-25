@@ -39,7 +39,7 @@ export async function fetchElectives(): Promise<Elective[]> {
   return data ?? [];
 }
 
-export async function addStudent(student: Omit<Student, 'electives'>): Promise<void> {
+export async function addStudent(student: Omit<Student, 'electives'> & { cgpa?: number; year?: number }): Promise<void> {
   const { data: existing } = await supabase
     .from('students')
     .select('reg_no')
@@ -55,7 +55,11 @@ export async function addStudent(student: Omit<Student, 'electives'>): Promise<v
   if (!elective) throw new Error('Elective not found.');
   if (elective.current_count >= elective.max_capacity) throw new Error('This elective is full. No seats available.');
 
-  const { error: insertErr } = await supabase.from('students').insert(student);
+  const { error: insertErr } = await supabase.from('students').insert({
+    ...student,
+    cgpa: student.cgpa ?? 0,
+    year: student.year ?? 1,
+  });
   if (insertErr) throw insertErr;
 
   const { error: updateErr } = await supabase
