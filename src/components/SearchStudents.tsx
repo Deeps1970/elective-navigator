@@ -39,9 +39,7 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
 
   const update = (key: string, val: string) => setFilters(prev => ({
     ...prev,
-    [key]: key === 'cgpa' ? (val ? parseFloat(val) : undefined)
-         : key === 'elective_id' ? (val ? parseInt(val) : undefined)
-         : val,
+    [key]: key === 'elective_id' ? (val ? parseInt(val) : undefined) : val,
   }));
 
   return (
@@ -56,7 +54,7 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
         <h2 className="text-2xl font-bold gradient-text mb-4" style={{ fontFamily: 'var(--font-display)' }}>
           Search Students
         </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <input className="glass-input" placeholder="Name" value={filters.name || ''} onChange={e => update('name', e.target.value)} />
           <select className="glass-input" value={filters.dept || ''} onChange={e => update('dept', e.target.value)}>
             <option value="">All Departments</option>
@@ -66,16 +64,12 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
             <option value="">All Sections</option>
             {SECTIONS.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
-          <input type="number" step="0.01" min="0" max="10" className="glass-input" placeholder="Min CGPA" onChange={e => update('cgpa', e.target.value)} />
           <select className="glass-input" value={filters.elective_id || ''} onChange={e => update('elective_id', e.target.value)}>
             <option value="">All Electives</option>
             {electives.map(el => <option key={el.elective_id} value={String(el.elective_id)}>{el.elective_name}</option>)}
           </select>
         </div>
-        <button
-          onClick={doSearch}
-          className="mt-4 btn-primary"
-        >
+        <button onClick={doSearch} className="mt-4 btn-primary">
           Search
         </button>
       </div>
@@ -86,7 +80,7 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/30">
-                {['Name', 'Reg No', 'Dept', 'Section', 'CGPA', 'Year', 'Elective'].map(h => (
+                {['Name', 'Reg No', 'Dept', 'Section', 'Batch', 'Elective'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-muted-foreground font-medium text-xs uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -94,9 +88,9 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
             <tbody>
               <AnimatePresence>
                 {loading ? (
-                  <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</td></tr>
+                  <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">Loading...</td></tr>
                 ) : students.length === 0 ? (
-                  <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">No students found</td></tr>
+                  <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">No students found</td></tr>
                 ) : (
                   students.map((s, i) => (
                     <motion.tr
@@ -113,8 +107,7 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
                       <td className="px-4 py-3 text-muted-foreground">{s.reg_no}</td>
                       <td className="px-4 py-3">{s.dept}</td>
                       <td className="px-4 py-3">{s.section}</td>
-                      <td className="px-4 py-3">{s.cgpa}</td>
-                      <td className="px-4 py-3">{s.year}</td>
+                      <td className="px-4 py-3">{s.batch || '—'}</td>
                       <td className="px-4 py-3 gradient-text font-medium">{(s.electives as any)?.elective_name || '—'}</td>
                     </motion.tr>
                   ))

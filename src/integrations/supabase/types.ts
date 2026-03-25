@@ -16,48 +16,99 @@ export type Database = {
     Tables: {
       electives: {
         Row: {
+          credits: number | null
           current_count: number
           elective_id: number
           elective_name: string
+          eligibility_criteria: string | null
           max_capacity: number
+          syllabus_link: string | null
         }
         Insert: {
+          credits?: number | null
           current_count?: number
           elective_id?: number
           elective_name: string
+          eligibility_criteria?: string | null
           max_capacity?: number
+          syllabus_link?: string | null
         }
         Update: {
+          credits?: number | null
           current_count?: number
           elective_id?: number
           elective_name?: string
+          eligibility_criteria?: string | null
           max_capacity?: number
+          syllabus_link?: string | null
         }
         Relationships: []
       }
+      enrollments: {
+        Row: {
+          created_at: string | null
+          elective_id: number
+          id: string
+          reg_no: string
+        }
+        Insert: {
+          created_at?: string | null
+          elective_id: number
+          id?: string
+          reg_no: string
+        }
+        Update: {
+          created_at?: string | null
+          elective_id?: number
+          id?: string
+          reg_no?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollments_elective_id_fkey"
+            columns: ["elective_id"]
+            isOneToOne: false
+            referencedRelation: "electives"
+            referencedColumns: ["elective_id"]
+          },
+          {
+            foreignKeyName: "enrollments_reg_no_fkey"
+            columns: ["reg_no"]
+            isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["reg_no"]
+          },
+        ]
+      }
       students: {
         Row: {
+          batch: string | null
           cgpa: number
           dept: string
-          elective_id: number
+          elective_id: number | null
+          email: string | null
           name: string
           reg_no: string
           section: string
           year: number
         }
         Insert: {
-          cgpa: number
+          batch?: string | null
+          cgpa?: number
           dept: string
-          elective_id: number
+          elective_id?: number | null
+          email?: string | null
           name: string
           reg_no: string
           section: string
-          year: number
+          year?: number
         }
         Update: {
+          batch?: string | null
           cgpa?: number
           dept?: string
-          elective_id?: number
+          elective_id?: number | null
+          email?: string | null
           name?: string
           reg_no?: string
           section?: string

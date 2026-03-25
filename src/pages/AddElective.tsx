@@ -8,6 +8,9 @@ import { addElective } from '@/lib/supabase';
 export default function AddElective() {
   const [name, setName] = useState('');
   const [capacity, setCapacity] = useState('');
+  const [eligibility, setEligibility] = useState('');
+  const [syllabusLink, setSyllabusLink] = useState('');
+  const [credits, setCredits] = useState('3');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -15,13 +18,18 @@ export default function AddElective() {
     if (!name.trim()) { toast.error('Elective name is required'); return; }
     const cap = parseInt(capacity);
     if (isNaN(cap) || cap <= 0) { toast.error('Max capacity must be greater than 0'); return; }
+    const cred = parseInt(credits);
+    if (isNaN(cred) || cred <= 0) { toast.error('Credits must be greater than 0'); return; }
 
     setLoading(true);
     try {
-      await addElective(name.trim(), cap);
+      await addElective(name.trim(), cap, eligibility.trim(), syllabusLink.trim(), cred);
       toast.success('Elective added successfully!');
       setName('');
       setCapacity('');
+      setEligibility('');
+      setSyllabusLink('');
+      setCredits('3');
     } catch (err: any) {
       toast.error(err.message || 'Failed to add elective');
     } finally {
@@ -49,9 +57,23 @@ export default function AddElective() {
               <label className="block text-sm text-muted-foreground mb-1.5">Elective Name</label>
               <input className="glass-input w-full" placeholder="e.g. Machine Learning" value={name} onChange={e => setName(e.target.value)} />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-muted-foreground mb-1.5">Max Capacity</label>
+                <input type="number" min="1" className="glass-input w-full" placeholder="30" value={capacity} onChange={e => setCapacity(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm text-muted-foreground mb-1.5">Credits</label>
+                <input type="number" min="1" className="glass-input w-full" placeholder="3" value={credits} onChange={e => setCredits(e.target.value)} />
+              </div>
+            </div>
             <div>
-              <label className="block text-sm text-muted-foreground mb-1.5">Max Capacity</label>
-              <input type="number" min="1" className="glass-input w-full" placeholder="30" value={capacity} onChange={e => setCapacity(e.target.value)} />
+              <label className="block text-sm text-muted-foreground mb-1.5">Eligibility Criteria</label>
+              <textarea className="glass-input w-full min-h-[80px]" placeholder="e.g. Minimum 7.0 CGPA required" value={eligibility} onChange={e => setEligibility(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-sm text-muted-foreground mb-1.5">Syllabus Link</label>
+              <input type="url" className="glass-input w-full" placeholder="https://..." value={syllabusLink} onChange={e => setSyllabusLink(e.target.value)} />
             </div>
             <button
               type="submit"
