@@ -22,10 +22,10 @@ export interface Student {
   batch: string;
   elective_id: number | null;
   // Joined from enrollments
-  enrollments?: {
+  enrollments?: Array<{
     elective_id: number;
     electives: { elective_name: string } | null;
-  }[];
+  }>;
 }
 
 export interface Enrollment {
