@@ -85,7 +85,7 @@ export type Database = {
           batch: string | null
           cgpa: number
           dept: string
-          elective_id: number
+          elective_id: number | null
           email: string | null
           name: string
           reg_no: string
@@ -94,20 +94,20 @@ export type Database = {
         }
         Insert: {
           batch?: string | null
-          cgpa: number
+          cgpa?: number
           dept: string
-          elective_id: number
+          elective_id?: number | null
           email?: string | null
           name: string
           reg_no: string
           section: string
-          year: number
+          year?: number
         }
         Update: {
           batch?: string | null
           cgpa?: number
           dept?: string
-          elective_id?: number
+          elective_id?: number | null
           email?: string | null
           name?: string
           reg_no?: string
