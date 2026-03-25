@@ -121,7 +121,7 @@ export async function searchStudents(filters: SearchFilters): Promise<Student[]>
   const { data, error } = await query;
   if (error) throw error;
 
-  let results = (data ?? []) as Student[];
+  let results = (data ?? []) as unknown as Student[];
 
   // Client-side filter by elective if needed (since elective is in enrollments)
   if (filters.elective_id) {
