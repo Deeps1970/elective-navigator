@@ -5,7 +5,6 @@ import { fetchElectives, addStudent, type Elective } from '@/lib/supabase';
 
 const DEPARTMENTS = ['CSE', 'IT', 'ECE', 'EEE', 'MECH'];
 const SECTIONS = ['A', 'B'];
-const YEARS = [1, 2, 3, 4];
 
 interface Props {
   onStudentAdded: () => void;
@@ -17,10 +16,10 @@ export default function AddStudentForm({ onStudentAdded }: Props) {
   const [form, setForm] = useState({
     name: '',
     reg_no: '',
+    email: '',
     dept: '',
     section: '',
-    cgpa: '',
-    year: '',
+    batch: '',
     elective_id: '',
   });
 
@@ -36,18 +35,13 @@ export default function AddStudentForm({ onStudentAdded }: Props) {
   useEffect(() => { loadElectives(); }, []);
 
   const reset = () => {
-    setForm({ name: '', reg_no: '', dept: '', section: '', cgpa: '', year: '', elective_id: '' });
+    setForm({ name: '', reg_no: '', email: '', dept: '', section: '', batch: '', elective_id: '' });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cgpa = parseFloat(form.cgpa);
-    if (!form.name || !form.reg_no || !form.dept || !form.section || !form.cgpa || !form.year || !form.elective_id) {
+    if (!form.name || !form.reg_no || !form.dept || !form.section || !form.batch || !form.elective_id) {
       toast.error('All fields are required');
-      return;
-    }
-    if (isNaN(cgpa) || cgpa < 0 || cgpa > 10) {
-      toast.error('CGPA must be between 0 and 10');
       return;
     }
 
@@ -56,10 +50,10 @@ export default function AddStudentForm({ onStudentAdded }: Props) {
       await addStudent({
         name: form.name,
         reg_no: form.reg_no,
+        email: form.email || '',
         dept: form.dept,
         section: form.section,
-        cgpa,
-        year: parseInt(form.year),
+        batch: form.batch,
         elective_id: parseInt(form.elective_id),
       });
       toast.success('Student added successfully!');
@@ -94,6 +88,10 @@ export default function AddStudentForm({ onStudentAdded }: Props) {
           <label className="block text-sm text-muted-foreground mb-1.5">Register Number</label>
           <input className="glass-input w-full" placeholder="e.g. 21CSE001" value={form.reg_no} onChange={e => update('reg_no', e.target.value)} />
         </div>
+        <div>
+          <label className="block text-sm text-muted-foreground mb-1.5">Email</label>
+          <input type="email" className="glass-input w-full" placeholder="student@example.com" value={form.email} onChange={e => update('email', e.target.value)} />
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm text-muted-foreground mb-1.5">Department</label>
@@ -110,18 +108,9 @@ export default function AddStudentForm({ onStudentAdded }: Props) {
             </select>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-muted-foreground mb-1.5">CGPA (0–10)</label>
-            <input type="number" step="0.01" min="0" max="10" className="glass-input w-full" placeholder="8.50" value={form.cgpa} onChange={e => update('cgpa', e.target.value)} />
-          </div>
-          <div>
-            <label className="block text-sm text-muted-foreground mb-1.5">Year</label>
-            <select className="glass-input w-full" value={form.year} onChange={e => update('year', e.target.value)}>
-              <option value="">Select</option>
-              {YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
-            </select>
-          </div>
+        <div>
+          <label className="block text-sm text-muted-foreground mb-1.5">Batch</label>
+          <input className="glass-input w-full" placeholder="e.g. 2021-2025" value={form.batch} onChange={e => update('batch', e.target.value)} />
         </div>
         <div>
           <label className="block text-sm text-muted-foreground mb-1.5">Elective</label>
@@ -150,7 +139,6 @@ export default function AddStudentForm({ onStudentAdded }: Props) {
             type="button"
             onClick={reset}
             className="rounded-xl px-6 py-3 font-semibold border border-border/40 text-muted-foreground hover:text-foreground transition-all"
-            
           >
             Reset
           </button>

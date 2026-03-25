@@ -41,17 +41,25 @@ export default function Landing() {
           >
             Seamlessly choose your electives with real-time seat tracking and a clean, professional interface.
           </motion.p>
-          <motion.button
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate('/app')}
-            className="btn-primary text-lg px-10 py-4 rounded-xl"
+            className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            Explore Our Product
-          </motion.button>
+            <button
+              onClick={() => navigate('/student-login')}
+              className="btn-primary text-lg px-10 py-4 rounded-xl"
+            >
+              Student Login
+            </button>
+            <button
+              onClick={() => navigate('/admin-login')}
+              className="rounded-xl px-10 py-4 text-lg font-semibold border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all"
+            >
+              Admin Login
+            </button>
+          </motion.div>
         </motion.div>
       </section>
 

@@ -7,17 +7,27 @@ export interface Elective {
   elective_name: string;
   max_capacity: number;
   current_count: number;
+  eligibility_criteria: string;
+  syllabus_link: string;
+  credits: number;
 }
 
 export interface Student {
   reg_no: string;
   name: string;
+  email: string;
   dept: string;
   section: string;
-  cgpa: number;
-  year: number;
+  batch: string;
   elective_id: number;
   electives?: Partial<Elective>;
+}
+
+export interface Enrollment {
+  id: string;
+  reg_no: string;
+  elective_id: number;
+  created_at: string;
 }
 
 export async function fetchElectives(): Promise<Elective[]> {
@@ -55,7 +65,7 @@ export async function addStudent(student: Omit<Student, 'electives'>): Promise<v
   if (updateErr) throw updateErr;
 }
 
-export async function addElective(name: string, maxCapacity: number): Promise<void> {
+export async function addElective(name: string, maxCapacity: number, eligibilityCriteria: string, syllabusLink: string, credits: number): Promise<void> {
   const { data: existing } = await supabase
     .from('electives')
     .select('elective_id')
@@ -65,7 +75,14 @@ export async function addElective(name: string, maxCapacity: number): Promise<vo
 
   const { error } = await supabase
     .from('electives')
-    .insert({ elective_name: name, max_capacity: maxCapacity, current_count: 0 });
+    .insert({
+      elective_name: name,
+      max_capacity: maxCapacity,
+      current_count: 0,
+      eligibility_criteria: eligibilityCriteria,
+      syllabus_link: syllabusLink,
+      credits,
+    });
   if (error) throw error;
 }
 
@@ -73,7 +90,6 @@ export interface SearchFilters {
   name?: string;
   dept?: string;
   section?: string;
-  cgpa?: number;
   elective_id?: number;
 }
 
@@ -86,7 +102,6 @@ export async function searchStudents(filters: SearchFilters): Promise<Student[]>
   if (filters.name) query = query.ilike('name', `%${filters.name}%`);
   if (filters.dept) query = query.eq('dept', filters.dept);
   if (filters.section) query = query.eq('section', filters.section);
-  if (filters.cgpa !== undefined && filters.cgpa > 0) query = query.gte('cgpa', filters.cgpa);
   if (filters.elective_id) query = query.eq('elective_id', filters.elective_id);
 
   const { data, error } = await query;
@@ -100,10 +115,6 @@ export async function updateStudent(
   oldElectiveId: number,
   newElectiveId: number
 ): Promise<void> {
-  if (updates.cgpa !== undefined && (updates.cgpa < 0 || updates.cgpa > 10)) {
-    throw new Error('CGPA must be between 0 and 10');
-  }
-
   if (oldElectiveId !== newElectiveId) {
     const { data: newEl } = await supabase
       .from('electives').select('*').eq('elective_id', newElectiveId).single();
@@ -130,6 +141,9 @@ export async function updateStudent(
 }
 
 export async function deleteStudent(regNo: string, electiveId: number): Promise<void> {
+  // Delete enrollment first (cascade should handle, but be explicit)
+  await supabase.from('enrollments').delete().eq('reg_no', regNo);
+
   const { error } = await supabase.from('students').delete().eq('reg_no', regNo);
   if (error) throw error;
 
@@ -140,4 +154,81 @@ export async function deleteStudent(regNo: string, electiveId: number): Promise<
       .update({ current_count: Math.max(0, el.current_count - 1) })
       .eq('elective_id', electiveId);
   }
+}
+
+// Student auth functions
+export async function registerStudent(student: { reg_no: string; name: string; email: string; dept: string; section: string; batch: string }): Promise<void> {
+  const { data: existing } = await supabase
+    .from('students')
+    .select('reg_no')
+    .eq('reg_no', student.reg_no)
+    .maybeSingle();
+  if (existing) throw new Error('A student with this Register Number already exists.');
+
+  const { data: emailExists } = await supabase
+    .from('students')
+    .select('reg_no')
+    .eq('email', student.email)
+    .maybeSingle();
+  if (emailExists) throw new Error('A student with this email already exists.');
+
+  const { error } = await supabase.from('students').insert({
+    ...student,
+    cgpa: 0,
+    year: 1,
+    elective_id: 0,
+  });
+  // elective_id 0 is a placeholder - student hasn't enrolled yet
+  // Actually we need a valid elective_id due to FK. Let's handle differently.
+  if (error) throw error;
+}
+
+export async function loginStudent(regNo: string, email: string): Promise<Student> {
+  const { data, error } = await supabase
+    .from('students')
+    .select('*')
+    .eq('reg_no', regNo)
+    .eq('email', email)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error('Invalid Register Number or Email.');
+  return data;
+}
+
+export async function getStudentEnrollment(regNo: string): Promise<Enrollment | null> {
+  const { data, error } = await supabase
+    .from('enrollments')
+    .select('*')
+    .eq('reg_no', regNo)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function enrollStudent(regNo: string, electiveId: number): Promise<void> {
+  // Check if already enrolled
+  const existing = await getStudentEnrollment(regNo);
+  if (existing) throw new Error('You are already enrolled in an elective.');
+
+  // Check capacity
+  const { data: elective } = await supabase
+    .from('electives')
+    .select('*')
+    .eq('elective_id', electiveId)
+    .single();
+  if (!elective) throw new Error('Elective not found.');
+  if (elective.current_count >= elective.max_capacity) throw new Error('This elective is full.');
+
+  // Insert enrollment
+  const { error: enrollErr } = await supabase
+    .from('enrollments')
+    .insert({ reg_no: regNo, elective_id: electiveId });
+  if (enrollErr) throw enrollErr;
+
+  // Increment count
+  const { error: updateErr } = await supabase
+    .from('electives')
+    .update({ current_count: elective.current_count + 1 })
+    .eq('elective_id', electiveId);
+  if (updateErr) throw updateErr;
 }

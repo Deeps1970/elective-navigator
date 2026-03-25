@@ -5,7 +5,6 @@ import { fetchElectives, updateStudent, deleteStudent, type Student, type Electi
 
 const DEPARTMENTS = ['CSE', 'IT', 'ECE', 'EEE', 'MECH'];
 const SECTIONS = ['A', 'B'];
-const YEARS = [1, 2, 3, 4];
 
 interface Props {
   student: Student;
@@ -21,8 +20,7 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
     name: student.name,
     dept: student.dept,
     section: student.section,
-    cgpa: String(student.cgpa),
-    year: String(student.year),
+    batch: student.batch || '',
     elective_id: String(student.elective_id),
   });
 
@@ -33,19 +31,15 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
   const update = (key: string, val: string) => setForm(prev => ({ ...prev, [key]: val }));
 
   const handleUpdate = async () => {
-    const cgpa = parseFloat(form.cgpa);
-    if (!form.name || !form.dept || !form.section || !form.cgpa || !form.year || !form.elective_id) {
+    if (!form.name || !form.dept || !form.section || !form.batch || !form.elective_id) {
       toast.error('All fields are required'); return;
-    }
-    if (isNaN(cgpa) || cgpa < 0 || cgpa > 10) {
-      toast.error('CGPA must be between 0 and 10'); return;
     }
 
     setLoading(true);
     try {
       await updateStudent(
         student.reg_no,
-        { name: form.name, dept: form.dept, section: form.section, cgpa, year: parseInt(form.year), elective_id: parseInt(form.elective_id) },
+        { name: form.name, dept: form.dept, section: form.section, batch: form.batch, elective_id: parseInt(form.elective_id) },
         student.elective_id,
         parseInt(form.elective_id)
       );
@@ -82,10 +76,7 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
         className="fixed inset-0 z-50 flex items-center justify-center p-4"
         onClick={onClose}
       >
-        {/* Backdrop */}
         <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
-
-        {/* Modal */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -105,18 +96,10 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
             <div className="space-y-4">
               <p className="text-foreground">Are you sure you want to delete <strong>{student.name}</strong> ({student.reg_no})?</p>
               <div className="flex gap-3">
-                <button
-                  onClick={handleDelete}
-                  disabled={loading}
-                  className="flex-1 rounded-xl py-3 font-semibold text-primary-foreground bg-destructive hover:opacity-90 disabled:opacity-50 transition-all"
-                >
+                <button onClick={handleDelete} disabled={loading} className="flex-1 rounded-xl py-3 font-semibold text-primary-foreground bg-destructive hover:opacity-90 disabled:opacity-50 transition-all">
                   {loading ? 'Deleting...' : 'Yes, Delete'}
                 </button>
-                <button
-                  onClick={() => setConfirmDelete(false)}
-                  className="flex-1 rounded-xl py-3 font-semibold border border-border/40 text-muted-foreground hover:text-foreground transition-all"
-                  
-                >
+                <button onClick={() => setConfirmDelete(false)} className="flex-1 rounded-xl py-3 font-semibold border border-border/40 text-muted-foreground hover:text-foreground transition-all">
                   Cancel
                 </button>
               </div>
@@ -145,17 +128,9 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-muted-foreground mb-1.5">CGPA</label>
-                  <input type="number" step="0.01" min="0" max="10" className="glass-input w-full" value={form.cgpa} onChange={e => update('cgpa', e.target.value)} />
-                </div>
-                <div>
-                  <label className="block text-sm text-muted-foreground mb-1.5">Year</label>
-                  <select className="glass-input w-full" value={form.year} onChange={e => update('year', e.target.value)}>
-                    {YEARS.map(y => <option key={y} value={String(y)}>{y}</option>)}
-                  </select>
-                </div>
+              <div>
+                <label className="block text-sm text-muted-foreground mb-1.5">Batch</label>
+                <input className="glass-input w-full" value={form.batch} onChange={e => update('batch', e.target.value)} placeholder="e.g. 2021-2025" />
               </div>
               <div>
                 <label className="block text-sm text-muted-foreground mb-1.5">Elective</label>
@@ -173,25 +148,13 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
                 </select>
               </div>
               <div className="flex gap-3 pt-2">
-                <button
-                  onClick={handleUpdate}
-                  disabled={loading}
-                  className="flex-1 btn-primary py-3"
-                >
+                <button onClick={handleUpdate} disabled={loading} className="flex-1 btn-primary py-3">
                   {loading ? 'Updating...' : 'Update'}
                 </button>
-                <button
-                  onClick={() => setConfirmDelete(true)}
-                  disabled={loading}
-                  className="rounded-xl px-6 py-3 font-semibold bg-destructive text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-all"
-                >
+                <button onClick={() => setConfirmDelete(true)} disabled={loading} className="rounded-xl px-6 py-3 font-semibold bg-destructive text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-all">
                   Delete
                 </button>
-                <button
-                  onClick={onClose}
-                  className="rounded-xl px-6 py-3 font-semibold border border-border/40 text-muted-foreground hover:text-foreground transition-all"
-                  
-                >
+                <button onClick={onClose} className="rounded-xl px-6 py-3 font-semibold border border-border/40 text-muted-foreground hover:text-foreground transition-all">
                   Cancel
                 </button>
               </div>
