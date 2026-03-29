@@ -27,7 +27,7 @@ export default function StudentDashboard() {
   const loadData = async () => {
     try {
       const [electivesData, enrollmentData] = await Promise.all([
-        fetchElectivesByBatch(student.batch),
+        fetchElectivesByBatch(student.batch, student.dept),
         getStudentEnrollment(student.reg_no),
       ]);
       setElectives(electivesData);
