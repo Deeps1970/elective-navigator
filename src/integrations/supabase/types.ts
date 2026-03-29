@@ -14,6 +14,32 @@ export type Database = {
   }
   public: {
     Tables: {
+      elective_departments: {
+        Row: {
+          department: string
+          elective_id: number
+          id: string
+        }
+        Insert: {
+          department: string
+          elective_id: number
+          id?: string
+        }
+        Update: {
+          department?: string
+          elective_id?: number
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elective_departments_elective_id_fkey"
+            columns: ["elective_id"]
+            isOneToOne: false
+            referencedRelation: "electives"
+            referencedColumns: ["elective_id"]
+          },
+        ]
+      }
       electives: {
         Row: {
           batch: string

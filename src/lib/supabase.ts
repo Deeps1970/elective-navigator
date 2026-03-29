@@ -44,14 +44,27 @@ export async function fetchElectives(): Promise<Elective[]> {
   return data ?? [];
 }
 
-export async function fetchElectivesByBatch(batch: string): Promise<Elective[]> {
+export async function fetchElectivesByBatch(batch: string, dept?: string): Promise<Elective[]> {
   const { data, error } = await supabase
     .from('electives')
-    .select('*')
+    .select('*, elective_departments(department)')
     .eq('batch', batch)
     .order('elective_id');
   if (error) throw error;
-  return data ?? [];
+
+  let results = (data ?? []) as any[];
+
+  // Filter by department if provided
+  if (dept) {
+    results = results.filter((el: any) => {
+      const depts = el.elective_departments;
+      if (!depts || (Array.isArray(depts) && depts.length === 0)) return true; // no dept restriction = open to all
+      if (Array.isArray(depts)) return depts.some((d: any) => d.department === dept);
+      return depts.department === dept;
+    });
+  }
+
+  return results.map(({ elective_departments, ...rest }: any) => rest) as Elective[];
 }
 
 export async function addStudent(student: Omit<Student, 'enrollments'> & { cgpa?: number; year?: number }): Promise<void> {
@@ -76,7 +89,7 @@ export async function addStudent(student: Omit<Student, 'enrollments'> & { cgpa?
   if (insertErr) throw insertErr;
 }
 
-export async function addElective(name: string, batch: string, maxCapacity: number, eligibilityCriteria: string, syllabusLink: string, credits: number): Promise<void> {
+export async function addElective(name: string, batch: string, maxCapacity: number, eligibilityCriteria: string, syllabusLink: string, credits: number, departments: string[]): Promise<void> {
   const { data: existing } = await supabase
     .from('electives')
     .select('elective_id')
@@ -85,7 +98,7 @@ export async function addElective(name: string, batch: string, maxCapacity: numb
     .maybeSingle();
   if (existing) throw new Error('An elective with this name already exists for this batch.');
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('electives')
     .insert({
       elective_name: name,
@@ -95,8 +108,20 @@ export async function addElective(name: string, batch: string, maxCapacity: numb
       eligibility_criteria: eligibilityCriteria,
       syllabus_link: syllabusLink,
       credits,
-    });
+    })
+    .select('elective_id')
+    .single();
   if (error) throw error;
+
+  // Insert department mappings
+  if (departments.length > 0) {
+    const rows = departments.map(dept => ({
+      elective_id: data.elective_id,
+      department: dept,
+    }));
+    const { error: deptErr } = await supabase.from('elective_departments').insert(rows);
+    if (deptErr) throw deptErr;
+  }
 }
 
 export interface SearchFilters {
