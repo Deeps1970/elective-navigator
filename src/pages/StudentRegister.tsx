@@ -15,6 +15,7 @@ export default function StudentRegister() {
     name: '',
     reg_no: '',
     email: '',
+    password: '',
     dept: '',
     section: '',
     batch: '',
@@ -24,7 +25,7 @@ export default function StudentRegister() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.reg_no || !form.email || !form.dept || !form.section || !form.batch) {
+    if (!form.name || !form.reg_no || !form.email || !form.password || !form.dept || !form.section || !form.batch) {
       toast.error('All fields are required');
       return;
     }
@@ -64,6 +65,10 @@ export default function StudentRegister() {
           <div>
             <label className="block text-sm text-muted-foreground mb-1.5">Email</label>
             <input type="email" className="glass-input w-full" placeholder="student@example.com" value={form.email} onChange={e => update('email', e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-sm text-muted-foreground mb-1.5">Password</label>
+            <input type="password" className="glass-input w-full" placeholder="Create a password" value={form.password} onChange={e => update('password', e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>

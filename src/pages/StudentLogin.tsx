@@ -7,19 +7,19 @@ import ParticlesBackground from '@/components/ParticlesBackground';
 
 export default function StudentLogin() {
   const navigate = useNavigate();
-  const [regNo, setRegNo] = useState('');
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!regNo.trim() || !email.trim()) {
+    if (!identifier.trim() || !password.trim()) {
       toast.error('All fields are required');
       return;
     }
     setLoading(true);
     try {
-      const student = await loginStudent(regNo.trim(), email.trim());
+      const student = await loginStudent(identifier.trim(), password.trim());
       sessionStorage.setItem('student_data', JSON.stringify(student));
       toast.success(`Welcome, ${student.name}!`);
       navigate('/student-dashboard');
@@ -43,12 +43,12 @@ export default function StudentLogin() {
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-muted-foreground mb-1.5">Register Number</label>
-            <input className="glass-input w-full" placeholder="e.g. 21CSE001" value={regNo} onChange={e => setRegNo(e.target.value)} />
+            <label className="block text-sm text-muted-foreground mb-1.5">Register Number or Email</label>
+            <input className="glass-input w-full" placeholder="e.g. 21CSE001 or student@example.com" value={identifier} onChange={e => setIdentifier(e.target.value)} />
           </div>
           <div>
-            <label className="block text-sm text-muted-foreground mb-1.5">Email</label>
-            <input type="email" className="glass-input w-full" placeholder="student@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+            <label className="block text-sm text-muted-foreground mb-1.5">Password</label>
+            <input type="password" className="glass-input w-full" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} />
           </div>
           <button type="submit" disabled={loading} className="w-full btn-primary py-3">
             {loading ? 'Logging in...' : 'Login'}
