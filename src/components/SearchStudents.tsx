@@ -45,9 +45,13 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
 
   const getElectiveName = (student: Student): string => {
     console.log('Student enrollments:', student.reg_no, student.enrollments);
-    if (student.enrollments && student.enrollments.length > 0) {
-      const enrollment = student.enrollments[0];
-      return (enrollment.electives as any)?.elective_name || '—';
+    // enrollments is an object (one-to-one), not an array
+    const enrollment = student.enrollments as any;
+    if (enrollment && !Array.isArray(enrollment)) {
+      return enrollment.electives?.elective_name || '—';
+    }
+    if (Array.isArray(enrollment) && enrollment.length > 0) {
+      return enrollment[0].electives?.elective_name || '—';
     }
     return '—';
   };
