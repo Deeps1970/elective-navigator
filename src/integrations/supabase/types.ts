@@ -91,6 +91,7 @@ export type Database = {
           elective_id: number | null
           email: string | null
           name: string
+          password: string
           reg_no: string
           section: string
           year: number
@@ -102,6 +103,7 @@ export type Database = {
           elective_id?: number | null
           email?: string | null
           name: string
+          password?: string
           reg_no: string
           section: string
           year?: number
@@ -113,6 +115,7 @@ export type Database = {
           elective_id?: number | null
           email?: string | null
           name?: string
+          password?: string
           reg_no?: string
           section?: string
           year?: number
