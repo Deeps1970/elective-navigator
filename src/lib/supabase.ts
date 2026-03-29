@@ -169,7 +169,9 @@ export async function deleteStudent(regNo: string): Promise<void> {
 }
 
 // Student auth functions
-export async function registerStudent(student: { reg_no: string; name: string; email: string; dept: string; section: string; batch: string }): Promise<void> {
+export async function registerStudent(student: { reg_no: string; name: string; email: string; password: string; dept: string; section: string; batch: string }): Promise<void> {
+  if (!student.password || student.password.length < 4) throw new Error('Password must be at least 4 characters.');
+
   const { data: existing } = await supabase
     .from('students')
     .select('reg_no')
@@ -188,6 +190,7 @@ export async function registerStudent(student: { reg_no: string; name: string; e
     reg_no: student.reg_no,
     name: student.name,
     email: student.email,
+    password: student.password,
     dept: student.dept,
     section: student.section,
     batch: student.batch,
@@ -197,15 +200,28 @@ export async function registerStudent(student: { reg_no: string; name: string; e
   if (error) throw error;
 }
 
-export async function loginStudent(regNo: string, email: string): Promise<Student> {
-  const { data, error } = await supabase
+export async function loginStudent(identifier: string, password: string): Promise<Student> {
+  // Try by reg_no first
+  let { data, error } = await supabase
     .from('students')
     .select('*')
-    .eq('reg_no', regNo)
-    .eq('email', email)
+    .eq('reg_no', identifier)
     .maybeSingle();
+
+  // If not found, try by email
+  if (!data) {
+    const res = await supabase
+      .from('students')
+      .select('*')
+      .eq('email', identifier)
+      .maybeSingle();
+    data = res.data;
+    error = res.error;
+  }
+
   if (error) throw error;
-  if (!data) throw new Error('Invalid Register Number or Email.');
+  if (!data) throw new Error('No account found with that Register Number or Email.');
+  if ((data as any).password !== password) throw new Error('Incorrect password.');
   return data;
 }
 
