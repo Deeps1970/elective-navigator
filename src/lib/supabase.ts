@@ -21,6 +21,7 @@ export interface Student {
   section: string;
   batch: string;
   elective_id: number | null;
+  // Joined from enrollments
   enrollments?: Array<{
     elective_id: number;
     electives: { elective_name: string } | null;
@@ -49,7 +50,6 @@ export async function fetchElectivesByBatch(batch: string, dept?: string): Promi
     .select('*, elective_departments(department)')
     .eq('batch', batch)
     .order('elective_id');
-
   if (error) throw error;
 
   let results = (data ?? []) as any[];
@@ -57,24 +57,24 @@ export async function fetchElectivesByBatch(batch: string, dept?: string): Promi
   if (dept) {
     results = results.filter((el: any) => {
       const depts = el.elective_departments;
-      if (!depts || depts.length === 0) return true;
-      return depts.some((d: any) => d.department === dept);
+      if (!depts || (Array.isArray(depts) && depts.length === 0)) return true;
+      if (Array.isArray(depts)) return depts.some((d: any) => d.department === dept);
+      return depts.department === dept;
     });
   }
 
-  return results.map(({ elective_departments, ...rest }: any) => rest);
+  return results.map(({ elective_departments, ...rest }: any) => rest) as Elective[];
 }
 
-export async function addStudent(student: Omit<Student, 'enrollments'>): Promise<void> {
+export async function addStudent(student: Omit<Student, 'enrollments'> & { cgpa?: number; year?: number }): Promise<void> {
   const { data: existing } = await supabase
     .from('students')
     .select('reg_no')
     .eq('reg_no', student.reg_no)
     .maybeSingle();
-
   if (existing) throw new Error('A student with this Register Number already exists.');
 
-  const { error } = await supabase.from('students').insert({
+  const { error: insertErr } = await supabase.from('students').insert({
     reg_no: student.reg_no,
     name: student.name,
     email: student.email,
@@ -82,28 +82,23 @@ export async function addStudent(student: Omit<Student, 'enrollments'>): Promise
     section: student.section,
     batch: student.batch,
     elective_id: student.elective_id,
-  });
 
-  if (error) throw error;
+    // ❌ REMOVED (DB DOESN’T HAVE THESE COLUMNS)
+    // cgpa: student.cgpa ?? 0,
+    // year: student.year ?? 1,
+
+  });
+  if (insertErr) throw insertErr;
 }
 
-export async function addElective(
-  name: string,
-  batch: string,
-  maxCapacity: number,
-  eligibilityCriteria: string,
-  syllabusLink: string,
-  credits: number,
-  departments: string[]
-): Promise<void> {
+export async function addElective(name: string, batch: string, maxCapacity: number, eligibilityCriteria: string, syllabusLink: string, credits: number, departments: string[]): Promise<void> {
   const { data: existing } = await supabase
     .from('electives')
     .select('elective_id')
     .eq('elective_name', name)
     .eq('batch', batch)
     .maybeSingle();
-
-  if (existing) throw new Error('An elective already exists.');
+  if (existing) throw new Error('An elective with this name already exists for this batch.');
 
   const { data, error } = await supabase
     .from('electives')
@@ -118,15 +113,13 @@ export async function addElective(
     })
     .select('elective_id')
     .single();
-
   if (error) throw error;
 
   if (departments.length > 0) {
-    const rows = departments.map((dept) => ({
+    const rows = departments.map(dept => ({
       elective_id: data.elective_id,
       department: dept,
     }));
-
     const { error: deptErr } = await supabase.from('elective_departments').insert(rows);
     if (deptErr) throw deptErr;
   }
@@ -154,7 +147,7 @@ export async function searchStudents(filters: SearchFilters): Promise<Student[]>
   const { data, error } = await query;
   if (error) throw error;
 
-  let results = (data ?? []) as Student[];
+  let results = (data ?? []) as unknown as Student[];
 
   if (filters.elective_id) {
     results = results.filter(s =>
@@ -165,35 +158,49 @@ export async function searchStudents(filters: SearchFilters): Promise<Student[]>
   return results;
 }
 
-export async function registerStudent(student: {
-  reg_no: string;
-  name: string;
-  email: string;
-  password: string;
-  dept: string;
-  section: string;
-  batch: string;
-}): Promise<void> {
+export async function updateStudent(
+  regNo: string,
+  updates: Partial<Omit<Student, 'enrollments' | 'reg_no'>>
+): Promise<void> {
+  const { error } = await supabase.from('students').update(updates as any).eq('reg_no', regNo);
+  if (error) throw error;
+}
 
-  if (!student.password || student.password.length < 4) {
-    throw new Error('Password must be at least 4 characters.');
+export async function deleteStudent(regNo: string): Promise<void> {
+  const enrollment = await getStudentEnrollment(regNo);
+
+  await supabase.from('enrollments').delete().eq('reg_no', regNo);
+
+  const { error } = await supabase.from('students').delete().eq('reg_no', regNo);
+  if (error) throw error;
+
+  if (enrollment) {
+    const { data: el } = await supabase
+      .from('electives').select('current_count').eq('elective_id', enrollment.elective_id).single();
+    if (el) {
+      await supabase.from('electives')
+        .update({ current_count: Math.max(0, el.current_count - 1) })
+        .eq('elective_id', enrollment.elective_id);
+    }
   }
+}
+
+export async function registerStudent(student: { reg_no: string; name: string; email: string; password: string; dept: string; section: string; batch: string }): Promise<void> {
+  if (!student.password || student.password.length < 4) throw new Error('Password must be at least 4 characters.');
 
   const { data: existing } = await supabase
     .from('students')
     .select('reg_no')
     .eq('reg_no', student.reg_no)
     .maybeSingle();
-
-  if (existing) throw new Error('Register Number already exists.');
+  if (existing) throw new Error('A student with this Register Number already exists.');
 
   const { data: emailExists } = await supabase
     .from('students')
     .select('reg_no')
     .eq('email', student.email)
     .maybeSingle();
-
-  if (emailExists) throw new Error('Email already exists.');
+  if (emailExists) throw new Error('A student with this email already exists.');
 
   const { error } = await supabase.from('students').insert({
     reg_no: student.reg_no,
@@ -203,7 +210,70 @@ export async function registerStudent(student: {
     dept: student.dept,
     section: student.section,
     batch: student.batch,
-  });
+
+    // ❌ REMOVED
+    // cgpa: 0,
+    // year: 1,
+
+  } as any);
+  if (error) throw error;
+}
+
+export async function loginStudent(identifier: string, password: string): Promise<Student> {
+  let { data, error } = await supabase
+    .from('students')
+    .select('*')
+    .eq('reg_no', identifier)
+    .maybeSingle();
+
+  if (!data) {
+    const res = await supabase
+      .from('students')
+      .select('*')
+      .eq('email', identifier)
+      .maybeSingle();
+    data = res.data;
+    error = res.error;
+  }
 
   if (error) throw error;
+  if (!data) throw new Error('No account found.');
+  if ((data as any).password !== password) throw new Error('Incorrect password.');
+  return data;
+}
+
+export async function getStudentEnrollment(regNo: string): Promise<Enrollment | null> {
+  const { data, error } = await supabase
+    .from('enrollments')
+    .select('*')
+    .eq('reg_no', regNo)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function enrollStudent(regNo: string, electiveId: number, studentBatch: string): Promise<void> {
+  const existing = await getStudentEnrollment(regNo);
+  if (existing) throw new Error('You are already enrolled.');
+
+  const { data: elective } = await supabase
+    .from('electives')
+    .select('*')
+    .eq('elective_id', electiveId)
+    .single();
+
+  if (!elective) throw new Error('Elective not found.');
+  if (elective.current_count >= elective.max_capacity) throw new Error('This elective is full.');
+  if (elective.batch && elective.batch !== studentBatch) throw new Error('Not available for your batch.');
+
+  const { error: enrollErr } = await supabase
+    .from('enrollments')
+    .insert({ reg_no: regNo, elective_id: electiveId });
+  if (enrollErr) throw enrollErr;
+
+  const { error: updateErr } = await supabase
+    .from('electives')
+    .update({ current_count: elective.current_count + 1 })
+    .eq('elective_id', electiveId);
+  if (updateErr) throw updateErr;
 }
