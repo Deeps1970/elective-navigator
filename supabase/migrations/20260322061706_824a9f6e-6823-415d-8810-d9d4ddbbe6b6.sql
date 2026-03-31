@@ -13,7 +13,7 @@ CREATE TABLE public.students (
   name TEXT NOT NULL,
   dept TEXT NOT NULL,
   section TEXT NOT NULL,
-  cgpa NUMERIC(4,2) NOT NULL CHECK (cgpa >= 0 AND cgpa <= 10),
+  -- cgpa NUMERIC(4,2) NOT NULL CHECK (cgpa >= 0 AND cgpa <= 10),
   year INT NOT NULL CHECK (year >= 1 AND year <= 4),
   elective_id INT NOT NULL REFERENCES public.electives(elective_id) ON DELETE RESTRICT
 );
