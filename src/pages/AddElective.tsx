@@ -27,7 +27,7 @@ export default function AddElective() {
 
     setLoading(true);
     try {
-      await addElective(name.trim(), batch, cap, eligibility.trim(), syllabusLink.trim(), cred);
+      await addElective(name.trim(), batch, cap, eligibility.trim(), syllabusLink.trim(), cred, []);
       toast.success('Elective added successfully!');
       setName('');
       setBatch('');
