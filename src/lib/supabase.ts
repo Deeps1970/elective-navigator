@@ -147,6 +147,7 @@ export interface SearchFilters {
 
 /* 🔥 FIXED FUNCTION ONLY */
 export async function searchStudents(filters: SearchFilters): Promise<Student[]> {
+  // ✅ Step 1: Fetch students
   let query = supabase
     .from('students')
     .select('reg_no, name, email, dept, section, batch')
@@ -158,33 +159,59 @@ export async function searchStudents(filters: SearchFilters): Promise<Student[]>
   if (filters.batch) query = query.eq('batch', filters.batch);
 
   const { data: students, error } = await query;
-
   if (error) throw error;
 
-  const results = await Promise.all(
-    (students ?? []).map(async (student) => {
-      const { data: enrollment } = await supabase
-        .from('enrollments')
-        .select('elective_id, electives(elective_name)')
-        .eq('reg_no', student.reg_no)
-        .maybeSingle();
+  const studentList = students ?? [];
 
-      return {
-        ...student,
-        enrollments: enrollment ? [enrollment] : [],
-      };
-    })
-  );
+  // ✅ Step 2: Fetch ALL enrollments (single query)
+  const { data: enrollments } = await supabase
+    .from('enrollments')
+    .select('*');
 
-  let finalResults = results;
+  // ✅ Step 3: Fetch ALL electives (single query)
+  const { data: electives } = await supabase
+    .from('electives')
+    .select('*');
 
+  // 🔥 Create maps for fast lookup
+  const enrollmentMap = new Map();
+  enrollments?.forEach((e) => {
+    enrollmentMap.set(e.reg_no, e);
+  });
+
+  const electiveMap = new Map();
+  electives?.forEach((e) => {
+    electiveMap.set(e.elective_id, e);
+  });
+
+  // ✅ Step 4: Merge everything
+  let results = studentList.map((student) => {
+    const enrollment = enrollmentMap.get(student.reg_no);
+    const elective = enrollment ? electiveMap.get(enrollment.elective_id) : null;
+
+    return {
+      ...student,
+      enrollments: enrollment
+        ? [
+            {
+              elective_id: enrollment.elective_id,
+              electives: elective
+                ? { elective_name: elective.elective_name }
+                : null,
+            },
+          ]
+        : [],
+    };
+  });
+
+  // ✅ Step 5: Apply elective filter
   if (filters.elective_id) {
-    finalResults = results.filter((s) =>
+    results = results.filter((s) =>
       s.enrollments?.some((e) => e.elective_id === filters.elective_id)
     );
   }
 
-  return finalResults;
+  return results;
 }
 
 export async function updateStudent(
