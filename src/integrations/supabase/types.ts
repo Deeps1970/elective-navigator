@@ -43,31 +43,31 @@ export type Database = {
       electives: {
         Row: {
           batch: string
+          category: string | null
           credits: number | null
           current_count: number
           elective_id: number
           elective_name: string
-          eligibility_criteria: string | null
           max_capacity: number
           syllabus_link: string | null
         }
         Insert: {
           batch?: string
+          category?: string | null
           credits?: number | null
           current_count?: number
           elective_id?: number
           elective_name: string
-          eligibility_criteria?: string | null
           max_capacity?: number
           syllabus_link?: string | null
         }
         Update: {
           batch?: string
+          category?: string | null
           credits?: number | null
           current_count?: number
           elective_id?: number
           elective_name?: string
-          eligibility_criteria?: string | null
           max_capacity?: number
           syllabus_link?: string | null
         }
@@ -103,7 +103,7 @@ export type Database = {
           {
             foreignKeyName: "enrollments_reg_no_fkey"
             columns: ["reg_no"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["reg_no"]
           },

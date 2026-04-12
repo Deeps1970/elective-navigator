@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 import { searchStudents, fetchElectives, type Student, type SearchFilters, type Elective } from '@/lib/supabase';
 import EditStudentModal from './EditStudentModal';
 
@@ -32,7 +33,7 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
     }
   }, [filters]);
 
-  useEffect(() => { doSearch(); }, [refreshKey, doSearch]);
+  useEffect(() => { void doSearch(); }, [refreshKey, doSearch]);
 
   useEffect(() => {
     fetchElectives().then(setElectives).catch(() => {});
@@ -43,17 +44,55 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
     [key]: key === 'elective_id' ? (val ? parseInt(val) : undefined) : val,
   }));
 
-  const getElectiveName = (student: Student): string => {
-    console.log('Student enrollments:', student.reg_no, student.enrollments);
-    // enrollments is an object (one-to-one), not an array
-    const enrollment = student.enrollments as any;
-    if (enrollment && !Array.isArray(enrollment)) {
-      return enrollment.electives?.elective_name || 'â€”';
+  const getEnrollmentSummary = (student: Student): string => {
+    if (!student.enrollments || student.enrollments.length === 0) {
+      return '—';
     }
-    if (Array.isArray(enrollment) && enrollment.length > 0) {
-      return enrollment[0].electives?.elective_name || 'â€”';
+
+    return student.enrollments
+      .map((enrollment) => enrollment.category ? `${enrollment.category}: ${enrollment.elective_name}` : enrollment.elective_name)
+      .join(', ');
+  };
+
+  const handleDownloadExcel = () => {
+    if (students.length === 0) {
+      toast.error('No student data available to export');
+      return;
     }
-    return 'â€”';
+
+    const rows = students.map((student) => {
+      const row: Record<string, string> = {
+        Name: student.name,
+        'Reg No': student.reg_no,
+        Email: student.email || '',
+        Dept: student.dept,
+        Section: student.section,
+        Batch: student.batch || '',
+        PE1: '',
+        PE2: '',
+        PE3: '',
+        PE4: '',
+        OE: '',
+        'Enrollment Time': '',
+      };
+
+      for (const enrollment of student.enrollments ?? []) {
+        if (enrollment.category) {
+          row[enrollment.category] = enrollment.elective_name;
+        }
+
+        if (!row['Enrollment Time'] && enrollment.created_at) {
+          row['Enrollment Time'] = new Date(enrollment.created_at).toLocaleString();
+        }
+      }
+
+      return row;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Students');
+    XLSX.writeFile(workbook, 'elective-students.xlsx');
   };
 
   return (
@@ -63,7 +102,6 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
       transition={{ duration: 0.5, delay: 0.1 }}
       className="space-y-6"
     >
-      {/* Search Filters */}
       <div className="glass-card gradient-border p-6">
         <h2 className="text-2xl font-bold gradient-text mb-4" style={{ fontFamily: 'var(--font-display)' }}>
           Search Students
@@ -87,12 +125,16 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
             {electives.map(el => <option key={el.elective_id} value={String(el.elective_id)}>{el.elective_name}</option>)}
           </select>
         </div>
-        <button onClick={doSearch} className="mt-4 btn-primary">
-          Search
-        </button>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button onClick={doSearch} className="btn-primary">
+            Search
+          </button>
+          <button onClick={handleDownloadExcel} type="button" className="rounded-xl border border-border/40 px-5 py-2.5 font-semibold text-foreground hover:bg-muted/30 transition-all">
+            Download Excel
+          </button>
+        </div>
       </div>
 
-      {/* Results Table */}
       <div className="glass-card gradient-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -123,11 +165,11 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
                     >
                       <td className="px-4 py-3 font-medium">{s.name}</td>
                       <td className="px-4 py-3 text-muted-foreground">{s.reg_no}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{s.email || 'â€”'}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{s.email || '—'}</td>
                       <td className="px-4 py-3">{s.dept}</td>
                       <td className="px-4 py-3">{s.section}</td>
-                      <td className="px-4 py-3">{s.batch || 'â€”'}</td>
-                      <td className="px-4 py-3 gradient-text font-medium">{getElectiveName(s)}</td>
+                      <td className="px-4 py-3">{s.batch || '—'}</td>
+                      <td className="px-4 py-3 gradient-text font-medium">{getEnrollmentSummary(s)}</td>
                     </motion.tr>
                   ))
                 )}
@@ -140,7 +182,7 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
         <EditStudentModal
           student={selectedStudent}
           onClose={() => setSelectedStudent(null)}
-          onUpdated={() => { doSearch(); onDataChanged?.(); }}
+          onUpdated={() => { void doSearch(); onDataChanged?.(); }}
         />
       )}
     </motion.div>

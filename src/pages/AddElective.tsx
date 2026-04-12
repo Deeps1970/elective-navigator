@@ -3,15 +3,15 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import ParticlesBackground from '@/components/ParticlesBackground';
 import NavBar from '@/components/NavBar';
-import { addElective } from '@/lib/supabase';
+import { addElective, ELECTIVE_CATEGORIES, type ElectiveCategory } from '@/lib/supabase';
 
 const BATCHES = ['2023', '2024', '2025', '2026'];
 
 export default function AddElective() {
   const [name, setName] = useState('');
   const [batch, setBatch] = useState('');
+  const [category, setCategory] = useState<ElectiveCategory | ''>('');
   const [capacity, setCapacity] = useState('');
-  const [eligibility, setEligibility] = useState('');
   const [syllabusLink, setSyllabusLink] = useState('');
   const [credits, setCredits] = useState('3');
   const [loading, setLoading] = useState(false);
@@ -20,6 +20,7 @@ export default function AddElective() {
     e.preventDefault();
     if (!name.trim()) { toast.error('Elective name is required'); return; }
     if (!batch) { toast.error('Batch is required'); return; }
+    if (!category) { toast.error('Category is required'); return; }
     const cap = parseInt(capacity);
     if (isNaN(cap) || cap <= 0) { toast.error('Max capacity must be greater than 0'); return; }
     const cred = parseInt(credits);
@@ -27,12 +28,12 @@ export default function AddElective() {
 
     setLoading(true);
     try {
-      await addElective(name.trim(), batch, cap, eligibility.trim(), syllabusLink.trim(), cred, []);
+      await addElective(name.trim(), batch, cap, category, syllabusLink.trim(), cred, []);
       toast.success('Elective added successfully!');
       setName('');
       setBatch('');
+      setCategory('');
       setCapacity('');
-      setEligibility('');
       setSyllabusLink('');
       setCredits('3');
     } catch (err: any) {
@@ -76,12 +77,15 @@ export default function AddElective() {
               </div>
             </div>
             <div>
-              <label className="block text-sm text-muted-foreground mb-1.5">Credits</label>
-              <input type="number" min="1" className="glass-input w-full" placeholder="3" value={credits} onChange={e => setCredits(e.target.value)} />
+              <label className="block text-sm text-muted-foreground mb-1.5">Category</label>
+              <select className="glass-input w-full" value={category} onChange={e => setCategory(e.target.value as ElectiveCategory | '')}>
+                <option value="">Select Category</option>
+                {ELECTIVE_CATEGORIES.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
             </div>
             <div>
-              <label className="block text-sm text-muted-foreground mb-1.5">Eligibility Criteria</label>
-              <textarea className="glass-input w-full min-h-[80px]" placeholder="e.g. Minimum 7.0 CGPA required" value={eligibility} onChange={e => setEligibility(e.target.value)} />
+              <label className="block text-sm text-muted-foreground mb-1.5">Credits</label>
+              <input type="number" min="1" className="glass-input w-full" placeholder="3" value={credits} onChange={e => setCredits(e.target.value)} />
             </div>
             <div>
               <label className="block text-sm text-muted-foreground mb-1.5">Syllabus Link</label>

@@ -2,13 +2,21 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { fetchElectivesByBatch, getStudentEnrollment, enrollStudent, type Elective, type Enrollment } from '@/lib/supabase';
+import { fetchElectivesByBatch, getStudentEnrollments, enrollStudent, type Elective, type Enrollment } from '@/lib/supabase';
 import ParticlesBackground from '@/components/ParticlesBackground';
+
+const CATEGORY_TITLES: Record<string, string> = {
+  PE1: 'Personal Elective 1',
+  PE2: 'Personal Elective 2',
+  PE3: 'Personal Elective 3',
+  PE4: 'Personal Elective 4',
+  OE: 'Open Elective',
+};
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
   const [electives, setElectives] = useState<Elective[]>([]);
-  const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
   const [enrollingId, setEnrollingId] = useState<number | null>(null);
   const [confirmElective, setConfirmElective] = useState<Elective | null>(null);
@@ -21,17 +29,17 @@ export default function StudentDashboard() {
       navigate('/student-login');
       return;
     }
-    loadData();
+    void loadData();
   }, []);
 
   const loadData = async () => {
     try {
-      const [electivesData, enrollmentData] = await Promise.all([
+      const [electivesData, enrollmentsData] = await Promise.all([
         fetchElectivesByBatch(student.batch, student.dept),
-        getStudentEnrollment(student.reg_no),
+        getStudentEnrollments(student.reg_no),
       ]);
       setElectives(electivesData);
-      setEnrollment(enrollmentData);
+      setEnrollments(enrollmentsData);
     } catch {
       toast.error('Failed to load data');
     } finally {
@@ -43,7 +51,7 @@ export default function StudentDashboard() {
     setEnrollingId(elective.elective_id);
     try {
       await enrollStudent(student.reg_no, elective.elective_id, student.batch);
-      toast.success('Successfully Enrolled!');
+      toast.success('Successfully enrolled');
       setConfirmElective(null);
       await loadData();
     } catch (err: any) {
@@ -60,9 +68,30 @@ export default function StudentDashboard() {
 
   if (!student) return null;
 
-  const enrolledElective = enrollment
-    ? electives.find(e => e.elective_id === enrollment.elective_id)
-    : null;
+  const enrolledElectiveIds = new Set(enrollments.map((enrollment) => enrollment.elective_id));
+  const enrolledByCategory = new Map<string, Enrollment>();
+
+  for (const enrollment of enrollments) {
+    const elective = electives.find((item) => item.elective_id === enrollment.elective_id);
+    if (elective?.category && !enrolledByCategory.has(elective.category)) {
+      enrolledByCategory.set(elective.category, enrollment);
+    }
+  }
+
+  const electivesByCategory = electives.reduce<Record<string, Elective[]>>((groups, elective) => {
+    if (!elective.category) {
+      return groups;
+    }
+
+    if (!groups[elective.category]) {
+      groups[elective.category] = [];
+    }
+
+    groups[elective.category].push(elective);
+    return groups;
+  }, {});
+
+  const visibleCategories = Object.keys(electivesByCategory);
 
   return (
     <div className="min-h-screen relative">
@@ -83,17 +112,28 @@ export default function StudentDashboard() {
       </header>
 
       <main className="relative z-10 max-w-6xl mx-auto px-4 py-8">
-        {enrollment && enrolledElective && (
+        {enrollments.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="glass-card p-6 mb-8 border-l-4 border-l-primary"
           >
-            <h3 className="text-lg font-bold text-primary mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-              Your Enrolled Elective
+            <h3 className="text-lg font-bold text-primary mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              Your Enrollments
             </h3>
-            <p className="text-foreground font-semibold text-xl">{enrolledElective.elective_name}</p>
-            <p className="text-sm text-muted-foreground mt-1">Credits: {enrolledElective.credits}</p>
+            <div className="space-y-2">
+              {enrollments.map((enrollment) => {
+                const elective = electives.find((item) => item.elective_id === enrollment.elective_id);
+                if (!elective) return null;
+
+                return (
+                  <div key={enrollment.id} className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground">{CATEGORY_TITLES[elective.category || ''] || elective.category || 'Elective'}:</span>
+                    <span>{elective.elective_name}</span>
+                  </div>
+                );
+              })}
+            </div>
           </motion.div>
         )}
 
@@ -103,68 +143,78 @@ export default function StudentDashboard() {
 
         {loading ? (
           <p className="text-muted-foreground text-center py-12">Loading electives...</p>
-        ) : electives.length === 0 ? (
+        ) : visibleCategories.length === 0 ? (
           <p className="text-muted-foreground text-center py-12">No electives available for your batch.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {electives.map((el, i) => {
-              const available = el.current_count < el.max_capacity;
-              const isEnrolled = enrollment?.elective_id === el.elective_id;
-              return (
-                <motion.div
-                  key={el.elective_id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  className="glass-card p-6 flex flex-col"
-                >
-                  <h3 className="text-lg font-bold text-foreground mb-2">{el.elective_name}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    <strong>Credits:</strong> {el.credits}
-                  </p>
-                  {el.eligibility_criteria && (
-                    <p className="text-sm text-muted-foreground mb-2">
-                      <strong>Eligibility:</strong> {el.eligibility_criteria}
-                    </p>
-                  )}
-                  {el.syllabus_link && (
-                    <a
-                      href={el.syllabus_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline mb-3"
-                    >
-                      View Syllabus →
-                    </a>
-                  )}
-                  <div className="mt-auto pt-3 flex items-center justify-between">
-                    <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
-                      available
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}>
-                      {available ? 'Available' : 'Unavailable'}
-                    </span>
-                    {!enrollment && available && (
-                      <button
-                        onClick={() => setConfirmElective(el)}
-                        className="btn-primary py-2 px-4 text-sm"
+          <div className="space-y-8">
+            {visibleCategories.map((category) => (
+              <section key={category} className="space-y-4">
+                <div>
+                  <h3 className="text-xl font-bold text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
+                    {CATEGORY_TITLES[category] || category}
+                  </h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {electivesByCategory[category].map((el, i) => {
+                    const available = el.current_count < el.max_capacity;
+                    const isEnrolled = enrolledElectiveIds.has(el.elective_id);
+                    const categoryTaken = enrolledByCategory.has(category);
+                    const disableEnroll = !available || isEnrolled || categoryTaken;
+
+                    return (
+                      <motion.div
+                        key={el.elective_id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="glass-card p-6 flex flex-col"
                       >
-                        Enroll Now
-                      </button>
-                    )}
-                    {isEnrolled && (
-                      <span className="text-sm font-semibold text-primary">✓ Enrolled</span>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
+                        <h3 className="text-lg font-bold text-foreground mb-2">{el.elective_name}</h3>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          <strong>Credits:</strong> {el.credits}
+                        </p>
+                        {el.syllabus_link && (
+                          <a
+                            href={el.syllabus_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline mb-3"
+                          >
+                            View Syllabus ?
+                          </a>
+                        )}
+                        <div className="mt-auto pt-3 flex items-center justify-between gap-3">
+                          <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
+                            available
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}>
+                            {available ? 'Available' : 'Unavailable'}
+                          </span>
+                          {isEnrolled ? (
+                            <span className="text-sm font-semibold text-primary">Already Enrolled</span>
+                          ) : categoryTaken ? (
+                            <span className="text-sm font-semibold text-muted-foreground">Already Enrolled</span>
+                          ) : (
+                            <button
+                              onClick={() => setConfirmElective(el)}
+                              disabled={disableEnroll}
+                              className="btn-primary py-2 px-4 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Enroll Now
+                            </button>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
         )}
       </main>
 
-      {/* Confirmation Modal */}
       <AnimatePresence>
         {confirmElective && (
           <motion.div
@@ -188,9 +238,12 @@ export default function StudentDashboard() {
               <p className="text-muted-foreground mb-1">
                 You are about to enroll in:
               </p>
-              <p className="text-lg font-semibold text-primary mb-4">{confirmElective.elective_name}</p>
+              <p className="text-lg font-semibold text-primary mb-2">{confirmElective.elective_name}</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Category: {CATEGORY_TITLES[confirmElective.category || ''] || confirmElective.category}
+              </p>
               <p className="text-sm text-destructive font-medium mb-6">
-                ⚠️ You cannot change this elective after confirming. Continue?
+                You can enroll in only one elective per category. Continue?
               </p>
               <div className="flex gap-3">
                 <button

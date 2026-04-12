@@ -34,8 +34,7 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
     try {
       await updateStudent(
         student.reg_no,
-        { name: form.name, dept: form.dept, section: form.section, batch: form.batch, email: form.email },
-        0, 0
+        { name: form.name, dept: form.dept, section: form.section, batch: form.batch, email: form.email }
       );
       toast.success('Student updated successfully!');
       onUpdated();
@@ -61,7 +60,7 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
     }
   };
 
-  const enrolledElective = student.enrollments?.[0]?.electives;
+  const enrolledElectives = student.enrollments ?? [];
 
   return (
     <AnimatePresence>
@@ -132,10 +131,14 @@ export default function EditStudentModal({ student, onClose, onUpdated }: Props)
                 <label className="block text-sm text-muted-foreground mb-1.5">Batch</label>
                 <input className="glass-input w-full" value={form.batch} onChange={e => update('batch', e.target.value)} placeholder="e.g. 2024" />
               </div>
-              {enrolledElective && (
+              {enrolledElectives.length > 0 && (
                 <div>
-                  <label className="block text-sm text-muted-foreground mb-1.5">Enrolled Elective</label>
-                  <input className="glass-input w-full opacity-60 cursor-not-allowed" value={(enrolledElective as any)?.elective_name || '—'} readOnly />
+                  <label className="block text-sm text-muted-foreground mb-1.5">Enrolled Electives</label>
+                  <input
+                    className="glass-input w-full opacity-60 cursor-not-allowed"
+                    value={enrolledElectives.map((enrollment) => enrollment.category ? `${enrollment.category}: ${enrollment.elective_name}` : enrollment.elective_name).join(', ')}
+                    readOnly
+                  />
                 </div>
               )}
               <div className="flex gap-3 pt-2">

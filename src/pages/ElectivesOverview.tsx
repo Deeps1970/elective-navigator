@@ -49,7 +49,7 @@ export default function ElectivesOverview() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/30">
-                  {['Elective Name', 'Credits', 'Max Capacity', 'Current Count', 'Seats Left', 'Eligibility'].map(h => (
+                  {['Elective Name', 'Category', 'Credits', 'Max Capacity', 'Current Count', 'Seats Left'].map(h => (
                     <th key={h} className="px-6 py-3 text-left text-muted-foreground font-medium text-xs uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
@@ -71,6 +71,7 @@ export default function ElectivesOverview() {
                         className="border-b border-border/20 hover:bg-muted/20 transition-colors"
                       >
                         <td className="px-6 py-4 font-medium">{el.elective_name}</td>
+                        <td className="px-6 py-4 text-muted-foreground">{el.category || '—'}</td>
                         <td className="px-6 py-4 text-muted-foreground">{el.credits}</td>
                         <td className="px-6 py-4 text-muted-foreground">{el.max_capacity}</td>
                         <td className="px-6 py-4 text-muted-foreground">{el.current_count}</td>
@@ -79,7 +80,6 @@ export default function ElectivesOverview() {
                             {seatsLeft <= 0 ? 'FULL' : seatsLeft}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-muted-foreground text-xs">{el.eligibility_criteria || 'â€”'}</td>
                       </motion.tr>
                     );
                   })
