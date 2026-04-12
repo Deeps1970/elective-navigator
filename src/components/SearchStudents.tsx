@@ -60,6 +60,8 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
       return;
     }
 
+    console.log('Export Data:', students);
+
     const rows = students.map((student) => {
       const row: Record<string, string> = {
         Name: student.name,
@@ -81,8 +83,8 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
           row[enrollment.category] = enrollment.elective_name;
         }
 
-        if (!row['Enrollment Time'] && enrollment.created_at) {
-          row['Enrollment Time'] = new Date(enrollment.created_at).toLocaleString();
+        if (enrollment.created_at) {
+          row['Enrollment Time'] = enrollment.created_at;
         }
       }
 

@@ -30,13 +30,7 @@ export interface Student {
   dept: string;
   section: string;
   batch: string;
-  // ✅ NEW SYSTEM
-  enrollments?: Array<{
-    elective_id: number;
-    elective_name: string;
-    category: string;
-    created_at: string;
-  }>;
+  enrollments?: StudentEnrollment[];
 }
 
 export interface Enrollment {
@@ -108,7 +102,6 @@ export async function addStudent(student: Omit<Student, 'enrollments'> & { cgpa?
     dept: student.dept,
     section: student.section,
     batch: student.batch,
-    // elective_id: student.elective_id,
   });
 
   if (insertErr) throw insertErr;
@@ -170,86 +163,7 @@ export interface SearchFilters {
   elective_id?: number;
 }
 
-// export async function searchStudents(filters: SearchFilters): Promise<Student[]> {
-//   let query = supabase
-//     .from('students')
-//     .select('reg_no, name, email, dept, section, batch, elective_id')
-//     .order('name');
-
-//   if (filters.name) query = query.ilike('name', `%${filters.name}%`);
-//   if (filters.dept) query = query.eq('dept', filters.dept);
-//   if (filters.section) query = query.eq('section', filters.section);
-//   if (filters.batch) query = query.eq('batch', filters.batch);
-
-//   const { data: students, error } = await query;
-//   if (error) throw error;
-
-//   const studentList = (students ?? []) as StudentRow[];
-//   if (studentList.length === 0) return [];
-
-//   const studentRegNos = studentList.map((student) => student.reg_no);
-
-//   const { data: enrollments, error: enrollmentsError } = await supabase
-//     .from('enrollments')
-//     .select('reg_no, elective_id, created_at')
-//     .in('reg_no', studentRegNos);
-
-//   if (enrollmentsError) throw enrollmentsError;
-
-//   const electiveIds = Array.from(new Set((enrollments ?? []).map((enrollment) => enrollment.elective_id)));
-//   const { data: electives, error: electivesError } = electiveIds.length > 0
-//     ? await supabase
-//         .from('electives')
-//         .select('elective_id, elective_name, category')
-//         .in('elective_id', electiveIds)
-//     : { data: [], error: null };
-
-//   if (electivesError) throw electivesError;
-
-//   const electiveMap = new Map<number, Pick<Elective, 'elective_name' | 'category'>>();
-//   for (const elective of electives ?? []) {
-//     electiveMap.set(elective.elective_id, {
-//       elective_name: elective.elective_name,
-//       category: elective.category,
-//     });
-//   }
-
-//   const enrollmentMap = new Map<string, StudentEnrollment[]>();
-//   for (const enrollment of enrollments ?? []) {
-//     const elective = electiveMap.get(enrollment.elective_id);
-//     const current = enrollmentMap.get(enrollment.reg_no) ?? [];
-
-//     current.push({
-//       elective_id: enrollment.elective_id,
-//       elective_name: elective?.elective_name ?? 'Unknown Elective',
-//       category: elective?.category ?? null,
-//       created_at: enrollment.created_at,
-//     });
-
-//     enrollmentMap.set(enrollment.reg_no, current);
-//   }
-
-//   let results: Student[] = studentList.map((student) => ({
-//     ...student,
-//     enrollments: (enrollmentMap.get(student.reg_no) ?? []).sort((a, b) => {
-//       if (!a.created_at && !b.created_at) return 0;
-//       if (!a.created_at) return 1;
-//       if (!b.created_at) return -1;
-//       return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-//     }),
-//   }));
-
-//   if (filters.elective_id) {
-//     results = results.filter((student) =>
-//       student.enrollments?.some((enrollment) => enrollment.elective_id === filters.elective_id)
-//     );
-//   }
-
-//   return results;
-// }
-
 export async function searchStudents(filters: SearchFilters): Promise<Student[]> {
-  // 🔥 1. Fetch students
   let query = supabase
     .from('students')
     .select('reg_no, name, email, dept, section, batch')
@@ -263,45 +177,64 @@ export async function searchStudents(filters: SearchFilters): Promise<Student[]>
   const { data: students, error } = await query;
   if (error) throw error;
 
-  // 🔥 2. Fetch enrollments WITH category + name
-  const { data: enrollments } = await supabase
+  const studentList = (students ?? []) as StudentRow[];
+  if (studentList.length === 0) return [];
+
+  const studentRegNos = studentList.map((student) => student.reg_no);
+
+  const { data: enrollments, error: enrollmentsError } = await supabase
     .from('enrollments')
-    .select(`
-      reg_no,
-      elective_id,
-      created_at,
-      electives (
-        elective_name,
-        category
-      )
-    `);
+    .select('reg_no, elective_id, created_at')
+    .in('reg_no', studentRegNos);
 
-  // 🔥 3. Create mapping
-  const enrollmentMap = new Map<string, any[]>();
+  if (enrollmentsError) throw enrollmentsError;
 
-  enrollments?.forEach((e) => {
-    if (!enrollmentMap.has(e.reg_no)) {
-      enrollmentMap.set(e.reg_no, []);
-    }
+  const electiveIds = Array.from(new Set((enrollments ?? []).map((enrollment) => enrollment.elective_id)));
+  const { data: electives, error: electivesError } = electiveIds.length > 0
+    ? await supabase
+        .from('electives')
+        .select('elective_id, elective_name, category')
+        .in('elective_id', electiveIds)
+    : { data: [], error: null };
 
-    enrollmentMap.get(e.reg_no).push({
-      elective_id: e.elective_id,
-      elective_name: e.electives?.elective_name,
-      category: e.electives?.category,
-      created_at: e.created_at,
+  if (electivesError) throw electivesError;
+
+  const electiveMap = new Map<number, Pick<Elective, 'elective_name' | 'category'>>();
+  for (const elective of electives ?? []) {
+    electiveMap.set(elective.elective_id, {
+      elective_name: elective.elective_name,
+      category: elective.category,
     });
-  });
+  }
 
-  // 🔥 4. Attach to students
-  let results = (students ?? []).map((student) => ({
+  const enrollmentMap = new Map<string, StudentEnrollment[]>();
+  for (const enrollment of enrollments ?? []) {
+    const elective = electiveMap.get(enrollment.elective_id);
+    const current = enrollmentMap.get(enrollment.reg_no) ?? [];
+
+    current.push({
+      elective_id: enrollment.elective_id,
+      elective_name: elective?.elective_name ?? 'Unknown Elective',
+      category: elective?.category ?? null,
+      created_at: enrollment.created_at ?? null,
+    });
+
+    enrollmentMap.set(enrollment.reg_no, current);
+  }
+
+  let results = studentList.map((student) => ({
     ...student,
-    enrollments: enrollmentMap.get(student.reg_no) || [],
+    enrollments: (enrollmentMap.get(student.reg_no) ?? []).sort((a, b) => {
+      if (!a.created_at && !b.created_at) return 0;
+      if (!a.created_at) return 1;
+      if (!b.created_at) return -1;
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    }),
   }));
 
-  // 🔥 5. Filter by elective if needed
   if (filters.elective_id) {
-    results = results.filter((s) =>
-      s.enrollments?.some((e) => e.elective_id === filters.elective_id)
+    results = results.filter((student) =>
+      student.enrollments?.some((enrollment) => enrollment.elective_id === filters.elective_id)
     );
   }
 
