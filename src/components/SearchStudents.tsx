@@ -44,14 +44,24 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
     [key]: key === 'elective_id' ? (val ? parseInt(val) : undefined) : val,
   }));
 
-  const getEnrollmentSummary = (student: Student): string => {
-    if (!student.enrollments || student.enrollments.length === 0) {
-      return '—';
-    }
+  const getCategoryMap = (student: Student) => {
+    const categoryMap: Record<'PE1' | 'PE2' | 'PE3' | 'PE4' | 'OE', string> = {
+      PE1: '',
+      PE2: '',
+      PE3: '',
+      PE4: '',
+      OE: '',
+    };
 
-    return student.enrollments
-      .map((enrollment) => enrollment.category ? `${enrollment.category}: ${enrollment.elective_name}` : enrollment.elective_name)
-      .join(', ');
+    student.enrollments?.forEach((enrollment) => {
+      if (enrollment.category === 'PE1') categoryMap.PE1 = enrollment.elective_name;
+      if (enrollment.category === 'PE2') categoryMap.PE2 = enrollment.elective_name;
+      if (enrollment.category === 'PE3') categoryMap.PE3 = enrollment.elective_name;
+      if (enrollment.category === 'PE4') categoryMap.PE4 = enrollment.elective_name;
+      if (enrollment.category === 'OE') categoryMap.OE = enrollment.elective_name;
+    });
+
+    return categoryMap;
   };
 
   const handleDownloadExcel = () => {
@@ -142,7 +152,7 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/30">
-                {['Name', 'Reg No', 'Email', 'Dept', 'Section', 'Batch', 'Elective'].map(h => (
+                {['Name', 'Reg No', 'Email', 'Dept', 'Section', 'Batch', 'PE1', 'PE2', 'PE3', 'PE4', 'OE'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-muted-foreground font-medium text-xs uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -150,30 +160,38 @@ export default function SearchStudents({ refreshKey, onDataChanged }: Props) {
             <tbody>
               <AnimatePresence>
                 {loading ? (
-                  <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</td></tr>
+                  <tr><td colSpan={11} className="text-center py-8 text-muted-foreground">Loading...</td></tr>
                 ) : students.length === 0 ? (
-                  <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">No students found</td></tr>
+                  <tr><td colSpan={11} className="text-center py-8 text-muted-foreground">No students found</td></tr>
                 ) : (
-                  students.map((s, i) => (
-                    <motion.tr
-                      key={s.reg_no}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ delay: i * 0.03 }}
-                      className="border-b border-border/20 hover:bg-muted/20 transition-colors cursor-pointer"
-                      title="Click to edit or delete"
-                      onClick={() => setSelectedStudent(s)}
-                    >
-                      <td className="px-4 py-3 font-medium">{s.name}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{s.reg_no}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{s.email || '—'}</td>
-                      <td className="px-4 py-3">{s.dept}</td>
-                      <td className="px-4 py-3">{s.section}</td>
-                      <td className="px-4 py-3">{s.batch || '—'}</td>
-                      <td className="px-4 py-3 gradient-text font-medium">{getEnrollmentSummary(s)}</td>
-                    </motion.tr>
-                  ))
+                  students.map((s, i) => {
+                    const categoryMap = getCategoryMap(s);
+
+                    return (
+                      <motion.tr
+                        key={s.reg_no}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                        className="border-b border-border/20 hover:bg-muted/20 transition-colors cursor-pointer"
+                        title="Click to edit or delete"
+                        onClick={() => setSelectedStudent(s)}
+                      >
+                        <td className="px-4 py-3 font-medium">{s.name}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{s.reg_no}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{s.email || '—'}</td>
+                        <td className="px-4 py-3">{s.dept}</td>
+                        <td className="px-4 py-3">{s.section}</td>
+                        <td className="px-4 py-3">{s.batch || '—'}</td>
+                        <td className="px-4 py-3 gradient-text font-medium">{categoryMap.PE1 || '-'}</td>
+                        <td className="px-4 py-3 gradient-text font-medium">{categoryMap.PE2 || '-'}</td>
+                        <td className="px-4 py-3 gradient-text font-medium">{categoryMap.PE3 || '-'}</td>
+                        <td className="px-4 py-3 gradient-text font-medium">{categoryMap.PE4 || '-'}</td>
+                        <td className="px-4 py-3 gradient-text font-medium">{categoryMap.OE || '-'}</td>
+                      </motion.tr>
+                    );
+                  })
                 )}
               </AnimatePresence>
             </tbody>
