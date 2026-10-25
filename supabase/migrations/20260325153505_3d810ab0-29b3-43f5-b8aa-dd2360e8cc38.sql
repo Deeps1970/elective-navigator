@@ -1,1 +1,0 @@
-ALTER TABLE public.electives ADD COLUMN IF NOT EXISTS batch text DEFAULT '' NOT NULL;

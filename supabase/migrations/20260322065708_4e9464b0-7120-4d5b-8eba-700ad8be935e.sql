@@ -1,1 +1,0 @@
-CREATE POLICY "Allow insert for all" ON public.electives FOR INSERT TO public WITH CHECK (true);
