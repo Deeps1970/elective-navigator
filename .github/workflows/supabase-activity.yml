@@ -1,0 +1,33 @@
+
+name: Daily Supabase Activity
+
+on:
+  schedule:
+    # Every day at 06:30 UTC (12:00 PM IST)
+    - cron: "30 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  database-activity:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Query Supabase database
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Supabase secrets are missing."
+            exit 1
+          fi
+
+          RESPONSE=$(curl --silent --show-error --fail-with-body \
+            "$SUPABASE_URL/rest/v1/students?select=reg_no&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+
+          echo "Supabase database query completed successfully."
+          echo "$RESPONSE"
